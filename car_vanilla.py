@@ -289,13 +289,13 @@ def create_lp_defs(country_abs):
         if not os.path.exists(lp_dst_dir):
             os.makedirs(lp_dst_dir)
         lp_dst_file = os.path.join(lp_dst_dir, f'lp_car_{country_abs[country]}.sui')
-        # open and read file, extract car lp info, put in separate .sui file that can be imported
+        # open and read file, extract vehicle lp info, put in separate .sui file that can be imported
         with open(lp_src_file, "r", encoding="utf-8") as src:
             with open(lp_dst_file, "w", encoding="utf-8") as dst:
                 found_car = False
                 type = None
                 wrote_mat = False
-                # extend later to work with trucks, trailers and busses as well
+                # TODO: extend later to work with trucks, trailers and busses as well
                 for line in src:
                     if found_car:
                         if "{" not in line and "}" not in line:
@@ -336,59 +336,69 @@ def create_country_data(country_abs, cars_country, type):
         foreign_ratios = spawn_config[country]["international"]
 
         # retrieve random countries, and calculate spawn_ratio
-        random_countries = [c for c in country_abs.keys() if
-                            c not in map(lambda x: x[0], foreign_ratios) and c != country]
+        random_countries = [c for c in country_abs.keys() if c not in map(lambda x: x[0], foreign_ratios) and c != country]
         random_ratio = max(0.001, spawn_config[country]["random"] / len(random_countries))
         for random_country in random_countries:
             foreign_ratios.append((random_country, random_ratio))
 
         # generate license plate data
-        lp_dst_file = os.path.join(traffic_dst_dir, f"license_plates.{type}_mdg.sii")
-        with open(lp_dst_file, "w", encoding="utf-8") as dst:
+        generate_lp_data(country_abs, foreign_ratios, traffic_dst_dir, type)
+        # generate traffic files
+        generate_spawn_info(cars_country, country_abs, foreign_ratios, national_ratio, traffic_dst_dir, type)
+        # generate license plate material files
+        generate_lp_mats(country, country_abs, foreign_ratios, type)
+
+
+def generate_lp_mats(country, country_abs, foreign_ratios, type):
+    dst_dir = f"{material_dst_dir}{country}"
+    if not os.path.exists(dst_dir):
+        os.makedirs(dst_dir)
+    for ratio in foreign_ratios:
+        # TODO: change this system to work with other types as well.
+        src_files = [f"{material_src_dir}{ratio[0]}/front.mat", f"{material_src_dir}{ratio[0]}/rear.mat"]
+        for src_file in src_files:
+            with open(src_file, "r", encoding="utf-8") as src:
+                data = src.readlines()
+                dst_file = f"{dst_dir}\\{type}_{country_abs[ratio[0]]}_{'f' if 'front' in src_file else 'r'}.mat"
+                with open(dst_file, "w", encoding="utf-8") as dst:
+                    for line in data:
+                        if "texture" in line and "_name" not in line:
+                            line = line.replace('\"', f'\"/material/ui/lp/{ratio[0]}/', 1)
+                        dst.write(line)
+
+
+def generate_spawn_info(cars_country, country_abs, foreign_ratios, national_ratio, traffic_dst_dir, type):
+    for ratio in foreign_ratios:
+        foreign_abs = country_abs[ratio[0]]
+        # filter out the vehicles that should spawn in the foreign country and calculate the rates for this country
+        foreign_cars = [(car[0], 1 * float(ratio[1]) / national_ratio * car[1]) for car in
+                        get_cars_for_country(cars_country, foreign_abs) if car[1] > 0]
+        # generate a foreign traffic definition for this country
+        traffic_dst_file = os.path.join(traffic_dst_dir, f"traffic.{type}_{foreign_abs}.sii")
+        with open(traffic_dst_file, "w", encoding="utf-8") as dst:
             dst.write("SiiNunit\n{\n")
-            for ratio in foreign_ratios:
-                foreign_abs = country_abs[ratio[0]]
-                dst.write(
-                    f"license_plate_data : .lp.{type}_{foreign_abs}\n{{\n@include \"/def/country/{ratio[0]}/lp_{type}_{foreign_abs}.sui\"\n}}\n\n")
+            for foreign_car in foreign_cars:
+                dst.write(f"country_traffic_info : .country.info.traffic.{foreign_car[0]}.{foreign_abs} {{\n\t"
+                          f"object: traffic.{foreign_car[0]}.{foreign_abs}\n\tspawn_ratio: "
+                          f"{str(round(foreign_car[1], 3))}\n}}\n\n")
             dst.write("}")
 
-        # generate traffic files
+
+def generate_lp_data(country_abs, foreign_ratios, traffic_dst_dir, type):
+    lp_dst_file = os.path.join(traffic_dst_dir, f"license_plates.{type}_mdg.sii")
+    with open(lp_dst_file, "w", encoding="utf-8") as dst:
+        dst.write("SiiNunit\n{\n")
         for ratio in foreign_ratios:
             foreign_abs = country_abs[ratio[0]]
-            # filter out the cars that should spawn in the foreign country and calculate the rates for this country
-            foreign_cars = [(car[0], 1 * ratio[1] / national_ratio * car[1]) for car in
-                            get_cars_for_country(cars_country, foreign_abs) if car[1] > 0]
-            # generate a foreign traffic definition for this country
-            traffic_dst_file = os.path.join(traffic_dst_dir, f"traffic.{type}_{foreign_abs}.sii")
-            with open(traffic_dst_file, "w", encoding="utf-8") as dst:
-                dst.write("SiiNunit\n{\n")
-                for foreign_car in foreign_cars:
-                    dst.write(f"country_traffic_info : .country.info.traffic.{foreign_car[0]}.{foreign_abs} {{\n\t"
-                              f"object: traffic.{foreign_car[0]}.{foreign_abs}\n\tspawn_ratio: "
-                              f"{str(round(foreign_car[1], 3))}\n}}\n\n")
-                dst.write("}")
-
-        # generate license plate material files
-        dst_dir = f"{material_dst_dir}{country}"
-        if not os.path.exists(dst_dir):
-            os.makedirs(dst_dir)
-        for ratio in foreign_ratios:
-            src_files = [f"{material_src_dir}{ratio[0]}/front.mat", f"{material_src_dir}{ratio[0]}/rear.mat"]
-            for src_file in src_files:
-                with open(src_file, "r", encoding="utf-8") as src:
-                    data = src.readlines()
-                    dst_file = f"{dst_dir}\\{type}_{country_abs[ratio[0]]}_{'f' if 'front' in src_file else 'r'}.mat"
-                    with open(dst_file, "w", encoding="utf-8") as dst:
-                        for line in data:
-                            if "texture" in line and "_name" not in line:
-                                line = line.replace('\"', f'\"/material/ui/lp/{ratio[0]}/', 1)
-                            dst.write(line)
+            dst.write(
+                f"license_plate_data : .lp.{type}_{foreign_abs}\n{{\n@include \"/def/country/{ratio[0]}/lp_{type}_{foreign_abs}.sui\"\n}}\n\n")
+        dst.write("}")
 
 
 # get all countries and their abbreviations
 country_abbreviations = get_country_abbreviations()
 # get all specified cars from traffic
-variant_dict, cars_per_country = get_vehicles_per_country(country_abbreviations, vanilla_car_list, adapt_spawn_rates=True)
+variant_dict, cars_per_country = get_vehicles_per_country(country_abbreviations, vanilla_car_list, check_spawn_rates=True)
 # create car definitions for every country and variant
 create_vehicle_traffic_defs(cars_per_country, variant_dict, type_string)
 # create license plate definitions

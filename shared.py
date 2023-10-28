@@ -32,11 +32,11 @@ def get_country_abbreviations():
     return country_dict
 
 
-def get_vehicles_per_country(country_dict, vehicle_list, adapt_spawn_rates=False, src_dir=vehicle_src_dir, first_variant_only=True):
+def get_vehicles_per_country(country_dict, vehicle_list, check_spawn_rates=False, src_dir=vehicle_src_dir, first_variant_only=True):
     vehicle_country_dict = {}
     variant_dict = {}
 
-    # retrieve the variants that belong to the selected cars
+    # retrieve the variants that belong to the selected vehicles
     for vehicle in vehicle_list:
         vehicle_src_file = os.path.join(src_dir, f'{vehicle}.sui')
         with open(vehicle_src_file, "r", encoding="utf-8") as src:
@@ -53,21 +53,27 @@ def get_vehicles_per_country(country_dict, vehicle_list, adapt_spawn_rates=False
                     if first_variant_only:
                         break
 
-    if adapt_spawn_rates:
-        for key in country_dict:
-            f = os.path.join(country_src_dir, key, 'traffic.sii')
-            with open(f, encoding="utf8") as opened:
-                for line1, line2 in itertools.zip_longest(*[opened] * 2):
-                    if line2 is not None and "spawn_ratio: " in line2:
-                        spawn_ratio = float(line2.split("spawn_ratio: ")[1].strip())
-                        # take the minimum of 1.00 and the spawn rate
-                        if spawn_ratio < 1.00:
-                            vehicle = ".".join(line1.split(".")[1:]).strip()
-                            if vehicle in vehicle_country_dict:
-                                for idx, pair in enumerate(vehicle_country_dict[vehicle]):
-                                    if pair[0] == country_dict[key]:
-                                        vehicle_country_dict[vehicle][idx] = (country_dict[key], spawn_ratio)
+    if check_spawn_rates:
+        # check the traffic definitions for custom spawn rates
+        adapt_spawn_rates(country_dict, vehicle_country_dict)
     return variant_dict, vehicle_country_dict
+
+
+def adapt_spawn_rates(country_dict, vehicle_country_dict):
+    # check the traffic definitions for custom spawn rates and adapt where needed
+    for key in country_dict:
+        f = os.path.join(country_src_dir, key, 'traffic.sii')
+        with open(f, encoding="utf8") as opened:
+            for line1, line2 in itertools.zip_longest(*[opened] * 2):
+                if line2 is not None and "spawn_ratio: " in line2:
+                    spawn_ratio = float(line2.split("spawn_ratio: ")[1].strip())
+                    # take the minimum of 1.00 and the specified spawn rate
+                    if spawn_ratio < 1.00:
+                        vehicle = ".".join(line1.split(".")[1:]).strip()
+                        if vehicle in vehicle_country_dict:
+                            for idx, pair in enumerate(vehicle_country_dict[vehicle]):
+                                if pair[0] == country_dict[key]:
+                                    vehicle_country_dict[vehicle][idx] = (country_dict[key], spawn_ratio)
 
 
 def create_chassis(vehicle, line, country_code, dst_dir=vehicle_dst_dir):

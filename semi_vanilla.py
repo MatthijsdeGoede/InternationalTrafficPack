@@ -163,8 +163,8 @@ trailer_variant_dict, trailer_per_country = get_vehicles_per_country(country_abb
 create_vehicle_traffic_defs(trailer_per_country, trailer_variant_dict, trailer_type_string, src_dir=trailer_src_dir, dst_dir=trailer_dst_dir)
 # make a truck def for each truck for each country, set spawn_ratio to 0, custom license plate and link with all country trailers via trailer_chains
 create_vehicle_traffic_defs(trucks_per_country, truck_variant_dict, truck_type_string, trailer_chains=trailer_per_country)
-# create license plate definitions
+# TODO: create license plate definitions
 
-# use spawn config to generate country specific traffic definitions
+# TODO: use spawn config to generate country specific traffic definitions
 
-# export truck and trailer license plate materials and defs
+# TODO: export truck and trailer license plate materials and defs
