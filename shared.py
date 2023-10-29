@@ -32,7 +32,8 @@ def get_country_abbreviations():
     return country_dict
 
 
-def get_vehicles_per_country(country_dict, vehicle_list, check_spawn_rates=False, src_dir=vehicle_src_dir, first_variant_only=True):
+def get_vehicles_per_country(country_dict, vehicle_list, check_spawn_rates=False, src_dir=vehicle_src_dir,
+                             first_variant_only=True):
     vehicle_country_dict = {}
     variant_dict = {}
 
@@ -49,7 +50,7 @@ def get_vehicles_per_country(country_dict, vehicle_list, check_spawn_rates=False
                     variant_name = variant_name.replace("trailer.", "")
                     variant_dict[variant_name] = vehicle
                     vehicle_country_dict[variant_name] = [(country_dict[country], 1.00) for country in country_dict]
-                    # for cars it's enough to take the first variant only, whereas for trailers it's not
+                    # when working with sub variants, only the top variant should be added to the variant dict
                     if first_variant_only:
                         break
 
@@ -102,7 +103,8 @@ def create_chassis(vehicle, line, country_code, dst_dir=vehicle_dst_dir):
     return chassis_name
 
 
-def create_vehicle_traffic_defs(vehicle_country_dict, variant_dict, type_string, src_dir=vehicle_src_dir, dst_dir=vehicle_dst_dir, trailer_chains={}):
+def create_vehicle_traffic_defs(vehicle_country_dict, variant_dict, type_string, src_dir=vehicle_src_dir,
+                                dst_dir=vehicle_dst_dir, trailer_chains={}):
     if not os.path.exists(dst_dir):
         os.makedirs(dst_dir)
     for vehicle in vehicle_country_dict:
@@ -124,7 +126,8 @@ def create_vehicle_traffic_defs(vehicle_country_dict, variant_dict, type_string,
                         is_trailer = type_string == "trailer"
                         for i, input_line in enumerate(data):
                             if "vehicle_accessory" in input_line and ".chassis" in input_line and not is_trailer:
-                                chassis_name = create_chassis(variant_dict[vehicle], data[i + 2], country_code, dst_dir=dst_dir)
+                                chassis_name = create_chassis(variant_dict[vehicle], data[i + 2], country_code,
+                                                              dst_dir=dst_dir)
                             if "variant" in input_line or "traffic_vehicle" in input_line or "traffic_trailer" in input_line:
                                 candidate_name = ".".join(input_line.split(".")[1:]).strip()
                                 is_new = True
@@ -153,3 +156,145 @@ def create_vehicle_traffic_defs(vehicle_country_dict, variant_dict, type_string,
                                 chassis_name = None
                             else:
                                 dst.write(output_line)
+
+
+def create_lp_defs(country_abs, types_to_create):
+    country_lp_types = {}
+    for country in country_abs:
+        lp_src_file = os.path.join(country_src_dir, country, 'license_plates.sii')
+        lp_dst_dir = f"{country_dst_dir}{country}"
+        if not os.path.exists(lp_dst_dir):
+            os.makedirs(lp_dst_dir)
+        # open and read file, extract vehicle lp info, put in separate .sui file that can be imported
+        with open(lp_src_file, "r", encoding="utf-8") as src:
+            # read the file and gather truck, trailer and car types if present
+            found_vehicle = False
+            vehicle_type = None
+            wrote_mat = False
+            f_lp_mat = "front"
+            r_lp_mat = "rear"
+            lines = []
+            for line in src:
+                if found_vehicle:
+                    if "{" not in line and "}" not in line:
+                        if "type:" in line:
+                            type_name = f"{vehicle_type}_{country_abs[country]}"
+                            lines.append(f"\ttype: {type_name}\n")
+                        elif "templates[]:" in line:
+                            if not wrote_mat:
+                                lines.append(f'\tbackground_front: {type_name}_f\n\tbackground_rear: {type_name}_r\n\n')
+                                wrote_mat = True
+                            parts = line.split('\"')
+                            line = f'{parts[0]}\"<font face=/font/license_plate/{country}.font>{parts[1]}</font>\"\n'
+                            lines.append(line)
+                        elif "background_front" in line:
+                            f_lp_mat = line.split(":")[1].strip()
+                        elif "background_rear" in line:
+                            r_lp_mat = line.split(":")[1].strip()
+                        else:
+                            lines.append(line)
+                    elif "}" in line:
+                        lp_dst_file = os.path.join(lp_dst_dir, f'lp_{vehicle_type}_{country_abs[country]}.sui')
+                        with open(lp_dst_file, "w", encoding="utf-8") as dst:
+                            for line_to_write in lines:
+                                dst.write(line_to_write)
+                        if country in country_lp_types:
+                            country_lp_types[country][vehicle_type] = (f_lp_mat, r_lp_mat)
+                        else:
+                            country_lp_types[country] = {vehicle_type: (f_lp_mat, r_lp_mat)}
+                        lines = []
+                        found_vehicle = False
+                        wrote_mat = False
+                        vehicle_type = None
+                        f_lp_mat = "front"
+                        r_lp_mat = "rear"
+                elif "license_plate_data" in line:
+                    for candidate in types_to_create:
+                        if candidate in line:
+                            found_vehicle = True
+                            vehicle_type = candidate
+    return country_lp_types
+
+def get_vehicles_for_country(vehicles_country, country_code):
+    vehicles = []
+    for key, value_list in vehicles_country.items():
+        for tuple_item in value_list:
+            if tuple_item[0] == country_code:
+                vehicles.append((key, tuple_item[1]))
+    return vehicles
+
+
+def create_country_data(country_abs, vehicles_country, type, country_lps, spawn_config):
+    for country in spawn_config:
+        traffic_dst_dir = f"{country_dst_dir}{country}"
+        if not os.path.exists(traffic_dst_dir):
+            os.makedirs(traffic_dst_dir)
+
+        national_ratio = spawn_config[country]["national"]
+        foreign_ratios = spawn_config[country]["international"].copy()
+
+        # retrieve random countries, and calculate spawn_ratio
+        random_countries = [c for c in country_abs.keys() if
+                            c not in map(lambda x: x[0], foreign_ratios) and c != country]
+        random_ratio = max(0.001, spawn_config[country]["random"] / len(random_countries))
+        for random_country in random_countries:
+            foreign_ratios.append((random_country, random_ratio))
+
+        # generate license plate data
+        generate_lp_data(country_abs, foreign_ratios, traffic_dst_dir, type)
+        # generate traffic files (not needed for trailers)
+        if type != "trailer":
+            generate_spawn_info(vehicles_country, country_abs, foreign_ratios, national_ratio, traffic_dst_dir, type)
+        # generate license plate material files
+        generate_lp_mats(country, country_abs, foreign_ratios, type, country_lps)
+
+
+def generate_lp_mats(country, country_abs, foreign_ratios, type, country_lps):
+    dst_dir = f"{material_dst_dir}{country}"
+    if not os.path.exists(dst_dir):
+        os.makedirs(dst_dir)
+    for ratio in foreign_ratios:
+        foreign_country = ratio[0]
+        # check if type is available, else use fallback car type
+        if type in country_lps[foreign_country]:
+            f_mat, r_mat = country_lps[foreign_country][type]
+        else:
+            f_mat, r_mat = country_lps[foreign_country]["car"]
+        src_files = [f"{material_src_dir}{foreign_country}/{f_mat}.mat", f"{material_src_dir}{foreign_country}/{r_mat}.mat"]
+        for src_file in src_files:
+            with open(src_file, "r", encoding="utf-8") as src:
+                data = src.readlines()
+                dst_file = f"{dst_dir}\\{type}_{country_abs[foreign_country]}_{'f' if 'front' in src_file else 'r'}.mat"
+                with open(dst_file, "w", encoding="utf-8") as dst:
+                    for line in data:
+                        if "texture" in line and "_name" not in line:
+                            line = line.replace('\"', f'\"/material/ui/lp/{foreign_country}/', 1)
+                        dst.write(line)
+
+
+def generate_spawn_info(vehicles_country, country_abs, foreign_ratios, national_ratio, traffic_dst_dir, type):
+    for ratio in foreign_ratios:
+        foreign_abs = country_abs[ratio[0]]
+        # filter out the vehicles that should spawn in the foreign country and calculate the rates for this country
+        foreign_vehicles = [(vehicle[0], 1 * float(ratio[1]) / national_ratio * vehicle[1]) for vehicle in
+                            get_vehicles_for_country(vehicles_country, foreign_abs) if vehicle[1] > 0]
+        # generate a foreign traffic definition for this country
+        traffic_dst_file = os.path.join(traffic_dst_dir, f"traffic.{type}_{foreign_abs}.sii")
+        with open(traffic_dst_file, "w", encoding="utf-8") as dst:
+            dst.write("SiiNunit\n{\n")
+            for foreign_vehicle in foreign_vehicles:
+                dst.write(f"country_traffic_info : .country.info.traffic.{foreign_vehicle[0]}.{foreign_abs} {{\n\t"
+                          f"object: traffic.{foreign_vehicle[0]}.{foreign_abs}\n\tspawn_ratio: "
+                          f"{str(round(foreign_vehicle[1], 3))}\n}}\n\n")
+            dst.write("}")
+
+
+def generate_lp_data(country_abs, foreign_ratios, traffic_dst_dir, type):
+    lp_dst_file = os.path.join(traffic_dst_dir, f"license_plates.{type}_mdg.sii")
+    with open(lp_dst_file, "w", encoding="utf-8") as dst:
+        dst.write("SiiNunit\n{\n")
+        for ratio in foreign_ratios:
+            foreign_abs = country_abs[ratio[0]]
+            dst.write(
+                f"license_plate_data : .lp.{type}_{foreign_abs}\n{{\n@include \"/def/country/{ratio[0]}/lp_{type}_{foreign_abs}.sui\"\n}}\n\n")
+        dst.write("}")
