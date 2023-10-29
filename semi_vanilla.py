@@ -348,8 +348,6 @@ spawn_config = {
 
 truck_type_string = "truck"
 trailer_type_string = "trailer"
-trailer_src_dir = f"{base_folder}def\\vehicle\\trailer"
-trailer_dst_dir = f"{mod_folder}def\\vehicle\\trailer\\mdg"
 
 # get all countries and their abbreviations
 country_abbreviations = get_country_abbreviations()
@@ -358,7 +356,7 @@ country_lps = create_lp_defs(country_abbreviations, ["car", "truck", "trailer"])
 # get all specified trucks from traffic
 truck_variant_dict, trucks_per_country = get_vehicles_per_country(country_abbreviations, vanilla_truck_list)
 # get all specified trailers from traffic
-trailer_variant_dict, trailer_per_country = get_vehicles_per_country(country_abbreviations, vanilla_trailer_list, src_dir=trailer_src_dir, first_variant_only=False)
+trailer_variant_dict, trailer_per_country = get_vehicles_per_country(country_abbreviations, vanilla_trailer_list, src_dir=trailer_src_dir)
 # make a trailer def for each trailer for each country, set custom license plate
 create_vehicle_traffic_defs(trailer_per_country, trailer_variant_dict, trailer_type_string, src_dir=trailer_src_dir, dst_dir=trailer_dst_dir)
 # make a truck def for each truck for each country, set spawn_ratio to 0, custom license plate and link with all country trailers via trailer_chains
@@ -367,3 +365,7 @@ create_vehicle_traffic_defs(trucks_per_country, truck_variant_dict, truck_type_s
 create_country_data(country_abbreviations, trucks_per_country, truck_type_string, country_lps, spawn_config)
 # create all other country related files for the trailers
 create_country_data(country_abbreviations, trailer_per_country, trailer_type_string, country_lps, spawn_config)
+# create a traffic storage file for the trucks
+create_traffic_storage_file(vanilla_truck_list, truck_type_string)
+# create a traffic storage file for the trailers
+create_traffic_storage_file(vanilla_trailer_list, trailer_type_string)

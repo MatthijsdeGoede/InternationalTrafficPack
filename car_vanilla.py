@@ -287,9 +287,10 @@ country_abbreviations = get_country_abbreviations()
 # create license plate definitions
 country_lps = create_lp_defs(country_abbreviations, ["car"])
 # get all specified cars from traffic
-variant_dict, cars_per_country = get_vehicles_per_country(country_abbreviations, vanilla_car_list,
-                                                          check_spawn_rates=True)
+variant_dict, cars_per_country = get_vehicles_per_country(country_abbreviations, vanilla_car_list, check_spawn_rates=True)
 # create car definitions for every country and variant
 create_vehicle_traffic_defs(cars_per_country, variant_dict, type_string)
 # create all other country related files
 create_country_data(country_abbreviations, cars_per_country, type_string, country_lps, spawn_config)
+# create a traffic storage file for the cars
+create_traffic_storage_file(vanilla_car_list, type_string)
