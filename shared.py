@@ -16,7 +16,7 @@ material_dst_dir = f"{mod_folder}\\material\\ui\\lp\\"
 
 def create_traffic_storage_file(vehicle_list, type):
     storage_dir = f"{mod_folder}def\\vehicle"
-    storage_dst_file = f"{storage_dir}\\traffic_storage_{'trailer_semi' if type == 'trailer' else type}.esm.sii"
+    storage_dst_file = f"{storage_dir}\\traffic_storage_{'trailer_truck' if type == 'trailer' else type}.esm.sii"
     with open(storage_dst_file, "w") as dst:
         dst.write("SiiNunit\n{\n")
         for vehicle in vehicle_list:
@@ -45,8 +45,11 @@ def get_country_abbreviations():
     return country_dict
 
 
+def get_limited_spawn_rates(country_dict, limited_to):
+    return {country_dict[country]: 1.00 if limited_to is None or country in limited_to else 0.00 for country in country_dict}
+
 def get_vehicles_per_country(country_dict, vehicle_list, check_spawn_rates=False, src_dir=vehicle_src_dir,
-                             first_variant_only=True):
+                             first_variant_only=True, limited_to=None):
     vehicle_country_dict = {}
     variant_dict = {}
 
@@ -58,17 +61,16 @@ def get_vehicles_per_country(country_dict, vehicle_list, check_spawn_rates=False
                 # find first entry
                 if "traffic_vehicle" in input_line or "traffic_trailer" in input_line:
                     # assume standard 1.00 spawn rate for all variants and update this based on the traffic definitions
-                    variant_name = ".".join(input_line.split(".")[1:]).split(" ")[0].strip()
-                    variant_name = variant_name.replace("traffic.", "")
-                    variant_name = variant_name.replace("trailer.", "")
+                    variant_name = prepare_internal_name(input_line)
                     variant_dict[variant_name] = vehicle
-                    vehicle_country_dict[variant_name] = [(country_dict[country], 1.00) for country in country_dict]
+
+                    vehicle_country_dict[variant_name] = get_limited_spawn_rates(country_dict, limited_to)
                     # when working with sub variants, only the top variant should be added to the variant dict
                     if first_variant_only:
                         break
 
     if check_spawn_rates:
-        # check the traffic definitions for custom spawn rates
+        # check the country traffic definitions for custom spawn rates
         adapt_spawn_rates(country_dict, vehicle_country_dict)
     return variant_dict, vehicle_country_dict
 
@@ -85,9 +87,7 @@ def adapt_spawn_rates(country_dict, vehicle_country_dict):
                     if spawn_ratio < 1.00:
                         vehicle = ".".join(line1.split(".")[1:]).strip()
                         if vehicle in vehicle_country_dict:
-                            for idx, pair in enumerate(vehicle_country_dict[vehicle]):
-                                if pair[0] == country_dict[key]:
-                                    vehicle_country_dict[vehicle][idx] = (country_dict[key], spawn_ratio)
+                            vehicle_country_dict[vehicle][country_dict[key]] = spawn_ratio
 
 
 def create_chassis(vehicle, line, country_code, dst_dir=vehicle_dst_dir):
@@ -116,6 +116,35 @@ def create_chassis(vehicle, line, country_code, dst_dir=vehicle_dst_dir):
     return chassis_name
 
 
+def get_characters_surrounding_substring(input_string, substring):
+    index = input_string.find(substring)
+    ancestor = input_string[index - 1] if index > 0 else ""
+    successor = input_string[index + len(substring)] if index > 0 and index + len(substring) < len(
+        input_string) else "\n"
+    return ancestor, successor
+
+
+def replace_longest_substring(line, replacements, code):
+    longest_replacement = ""
+    for replacement in replacements:
+        # find the longest matching substring
+        if replacement in line and len(replacement) > len(longest_replacement):
+            longest_replacement = replacement
+    if longest_replacement:
+        # ignore comments
+        start = "\t" if "\t" in line else ""
+        line = f"{start}{line.split('#')[0].strip()}\n"
+        prev_char, next_char = get_characters_surrounding_substring(line, longest_replacement)
+        # only replace internal names containing a .
+        if next_char == "\n" or next_char == "." and prev_char == ".":
+            # put country code after occurrence
+            line = line.replace(longest_replacement, f"{longest_replacement}.{code}")
+        elif prev_char == ".":
+            # put country code at the end of the internal name
+            line = line.replace("\n", f".{code}\n")
+    return line
+
+
 def create_vehicle_traffic_defs(vehicle_country_dict, variant_dict, type_string, src_dir=vehicle_src_dir,
                                 dst_dir=vehicle_dst_dir, trailer_chains={}):
     if not os.path.exists(dst_dir):
@@ -129,54 +158,64 @@ def create_vehicle_traffic_defs(vehicle_country_dict, variant_dict, type_string,
             vehicle_dst_file = os.path.join(dst_dir, f'{variant_dict[vehicle]}.sui')
             with open(vehicle_dst_file, "w", encoding="utf-8") as dst:
                 cnt = 0
-                for pair in vehicle_country_dict[vehicle]:
+                for country_code in vehicle_country_dict[vehicle]:
                     if cnt > 0:
                         dst.write("\n\n")
-                    if pair[1] > 0:
+                    if vehicle_country_dict[vehicle][country_code] > 0:
                         cnt += 1
-                        country_code = pair[0]
                         chassis_name = None
                         is_truck = type_string == "truck"
                         is_trailer = type_string == "trailer"
                         for i, input_line in enumerate(data):
                             if "accessories[]:" in input_line and is_trailer:
-                                accessory = ".".join(input_line.split(".")[1:-1]).strip()
-                                accessory = accessory.replace("traffic.", "")
-                                accessory = accessory.replace("trailer.", "")
-                                accessories.add(accessory)
+                                accessory_name = prepare_internal_name(input_line, is_accessory=True)
+                                accessories.add(accessory_name)
                             if "vehicle_accessory" in input_line and ".chassis" in input_line and not is_trailer:
                                 chassis_name = create_chassis(variant_dict[vehicle], data[i + 2], country_code,
                                                               dst_dir=dst_dir)
                             if "variant" in input_line or "traffic_vehicle" in input_line or "traffic_trailer" in input_line:
-                                candidate_name = ".".join(input_line.split(".")[1:]).strip()
-                                candidate_name = candidate_name.replace("traffic.", "")
-                                candidate_name = candidate_name.replace("trailer.", "")
+                                candidate_name = prepare_internal_name(input_line)
                                 is_new = True
                                 for variant in variants:
                                     if variant in candidate_name:
                                         is_new = False
                                 if is_new:
                                     variants.add(candidate_name)
-                            output_line = input_line
-                            for replace in variants | accessories:
-                                output_line = output_line.replace(f".{replace}", f".{replace}.{country_code}")
-                            if "traffic_trailer" in input_line and "traffic." in input_line and "traffic.trailer" not in input_line:
-                                output_line = output_line.replace("traffic.", "traffic.trailer.")
-                            if "@include \"drivers" in input_line:
+
+                            output_line = replace_longest_substring(input_line, variants | accessories, country_code)
+                            if "traffic_trailer" in output_line:
+                                trailer_name = prepare_internal_name(output_line)
+                                dst.write(f"traffic_trailer : traffic.trailer.{trailer_name}\n")
+                            elif "variant[]:" in output_line and is_trailer:
+                                variant_name = prepare_internal_name(output_line)
+                                dst.write(f"	variant[]: traffic.trailer.{variant_name}\n")
+                            elif "@include \"drivers" in input_line:
                                 dst.write(f"\tspawn_ratio: 0\n\tlicense_plate_type: {type_string}_{country_code}\n\n")
                                 dst.write(f"@include \"/def/vehicle/ai/drivers{input_line.split('drivers')[1]}\n")
                             elif is_truck and "trailer_chains[]:" in input_line:
                                 for trailer in trailer_chains:
-                                    dst.write(f"\ttrailer_chains[]: \"traffic.trailer.{trailer}.{country_code}\"\n")
+                                    # check if trailer is suitable for this foreign country
+                                    if trailer_chains[trailer][country_code] > 0:
+                                        dst.write(f"\ttrailer_chains[]: \"traffic.trailer.{trailer}.{country_code}\"\n")
                             elif is_trailer and "cargo_mass:" in input_line:
                                 dst.write(f"\tlicense_plate_type: {type_string}_{country_code}\n\n")
                                 dst.write(output_line)
                             elif "data_path:" in input_line and chassis_name is not None:
                                 dst.write(
-                                    f'\tdata_path: \"/def/vehicle/ai/mdg/{variant_dict[vehicle]}/{chassis_name}.sii\"\n')
+                                    f'\tdata_path: \"/def/vehicle/ai/{sub_dir}/{variant_dict[vehicle]}/{chassis_name}.sii\"\n')
                                 chassis_name = None
+                            elif "spawn_ratio" in output_line:
+                                continue
                             else:
                                 dst.write(output_line)
+
+
+def prepare_internal_name(input_line, is_accessory=False):
+    split_line = input_line.split(".")[1:]
+    accessory = ".".join(split_line[:-1] if is_accessory else split_line).split(" ")[0].strip()
+    accessory = accessory.replace("traffic.", "")
+    accessory = accessory.replace("trailer.", "")
+    return accessory
 
 
 def create_lp_defs(country_abs, types_to_create):
@@ -200,10 +239,10 @@ def create_lp_defs(country_abs, types_to_create):
                     if "{" not in line and "}" not in line:
                         if "type:" in line:
                             type_name = f"{vehicle_type}_{country_abs[country]}"
-                            lines.append(f"\ttype: {type_name}\n")
                         elif "templates[]:" in line:
                             if not wrote_mat:
-                                lines.append(f'\tbackground_front: {type_name}_f\n\tbackground_rear: {type_name}_r\n\n')
+                                post_fix = ("", "") if vehicle_type == "trailer" else ("_f", "_r")
+                                lines.append(f'\tbackground_front: {type_name}{post_fix[0]}\n\tbackground_rear: {type_name}{post_fix[1]}\n\n')
                                 wrote_mat = True
                             parts = line.split('\"')
                             line = f'{parts[0]}\"<font face=/font/license_plate/{country}.font>{parts[1]}</font>\"\n'
@@ -234,15 +273,14 @@ def create_lp_defs(country_abs, types_to_create):
                         if candidate in line:
                             found_vehicle = True
                             vehicle_type = candidate
+                # make it so that truck and trailer are always exported, if not specified they receive the same as car
     return country_lp_types
 
 
 def get_vehicles_for_country(vehicles_country, country_code):
     vehicles = []
-    for key, value_list in vehicles_country.items():
-        for tuple_item in value_list:
-            if tuple_item[0] == country_code:
-                vehicles.append((key, tuple_item[1]))
+    for key, country_dict in vehicles_country.items():
+        vehicles.append((key, country_dict[country_code]))
     return vehicles
 
 
@@ -287,7 +325,8 @@ def generate_lp_mats(country, country_abs, foreign_ratios, type, country_lps):
         for src_file in src_files:
             with open(src_file, "r", encoding="utf-8") as src:
                 data = src.readlines()
-                dst_file = f"{dst_dir}\\{type}_{country_abs[foreign_country]}_{'f' if 'front' in src_file else 'r'}.mat"
+                post_fix = "" if type == "trailer" else ("_f" if "front" in src_file  else "_r")
+                dst_file = f"{dst_dir}\\{type}_{country_abs[foreign_country]}{post_fix}.mat"
                 with open(dst_file, "w", encoding="utf-8") as dst:
                     for line in data:
                         if "texture" in line and "_name" not in line:
@@ -313,7 +352,7 @@ def generate_spawn_info(vehicles_country, country_abs, foreign_ratios, national_
 
 
 def generate_lp_data(country_abs, foreign_ratios, traffic_dst_dir, type, country_lps):
-    lp_dst_file = os.path.join(traffic_dst_dir, f"license_plates.{type}_mdg.sii")
+    lp_dst_file = os.path.join(traffic_dst_dir, f"license_plates.{type}_esm.sii")
     with open(lp_dst_file, "w", encoding="utf-8") as dst:
         dst.write("SiiNunit\n{\n")
         for ratio in foreign_ratios:
@@ -321,5 +360,5 @@ def generate_lp_data(country_abs, foreign_ratios, traffic_dst_dir, type, country
             foreign_abs = country_abs[foreign_country]
             lp_ref = type if type in country_lps[foreign_country] else "car"
             dst.write(
-                f"license_plate_data : .lp.{type}_{foreign_abs}\n{{\n@include \"/def/country/{foreign_country}/lp_{lp_ref}_{foreign_abs}.sui\"\n}}\n\n")
+                f"license_plate_data : .lp.{type}_{foreign_abs}\n{{\n\ttype: {type}_{foreign_abs}\n@include \"/def/country/{foreign_country}/lp_{lp_ref}_{foreign_abs}.sui\"\n}}\n\n")
         dst.write("}")

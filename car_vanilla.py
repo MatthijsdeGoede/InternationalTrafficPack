@@ -273,7 +273,7 @@ spawn_config = {
     },
     "slovenia": {
         "national": 0.79,
-        "international": [("croatia", 0.03), ("austria", 0.04), ("italy", 0.03), ("croatia", 0.04), ("hungary", 0.03),
+        "international": [("croatia", 0.05), ("austria", 0.05), ("italy", 0.04), ("hungary", 0.03),
                           ("bosnia", 0.02), ("germany", 0.01)],
         "random": 0.01,
     },
