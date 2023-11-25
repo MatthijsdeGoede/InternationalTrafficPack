@@ -47,7 +47,9 @@ def get_country_abbreviations():
 
 
 def get_limited_spawn_rates(country_dict, limited_to):
-    return {country_dict[country]: 1.00 if limited_to is None or country in limited_to else 0.00 for country in country_dict}
+    return {country_dict[country]: 1.00 if limited_to is None or country in limited_to else 0.00 for country in
+            country_dict}
+
 
 def get_vehicles_per_country(country_dict, vehicle_list, check_spawn_rates=False, src_dir=vehicle_src_dir,
                              first_variant_only=True, limited_to=None):
@@ -61,6 +63,7 @@ def get_vehicles_per_country(country_dict, vehicle_list, check_spawn_rates=False
             for input_line in src:
                 # find first entry
                 if "traffic_vehicle" in input_line or "traffic_trailer" in input_line:
+                    # TODO: take the actual spawn rate from the vehicle definitions to prevent rare cars from spawning frequently abroad
                     # assume standard 1.00 spawn rate for all variants and update this based on the traffic definitions
                     variant_name = prepare_internal_name(input_line)
                     variant_dict[variant_name] = vehicle
@@ -194,10 +197,12 @@ def create_vehicle_traffic_defs(vehicle_country_dict, variant_dict, type_string,
                                 dst.write(f"\tspawn_ratio: 0\n\tlicense_plate_type: {type_string}_{country_code}\n\n")
                                 dst.write(f"@include \"/def/vehicle/ai/drivers{input_line.split('drivers')[1]}\n")
                             elif is_truck and "trailer_chains[]:" in input_line:
+                                # TODO investigate whether this is desired still, should be all trailers right?
                                 for trailer in random.sample(list(trailer_chains.items()), 5):
                                     # check if trailer is suitable for this foreign country
                                     if trailer[1][country_code] > 0:
-                                        dst.write(f"\ttrailer_chains[]: \"traffic.trailer.{trailer[0]}.{country_code}\"\n")
+                                        dst.write(
+                                            f"\ttrailer_chains[]: \"traffic.trailer.{trailer[0]}.{country_code}\"\n")
                             elif is_trailer and "cargo_mass:" in input_line:
                                 dst.write(f"\tlicense_plate_type: {type_string}_{country_code}\n\n")
                                 dst.write(output_line)
@@ -243,11 +248,13 @@ def create_lp_defs(country_abs, types_to_create):
                         elif "templates[]:" in line:
                             if not wrote_mat:
                                 post_fix = ("", "") if vehicle_type == "trailer" else ("_f", "_r")
-                                lines.append(f'\tbackground_front: {type_name}{post_fix[0]}\n\tbackground_rear: {type_name}{post_fix[1]}\n\n')
+                                lines.append(
+                                    f'\tbackground_front: {type_name}{post_fix[0]}\n\tbackground_rear: {type_name}{post_fix[1]}\n\n')
                                 wrote_mat = True
                             parts = line.split('\"')
                             line = f'{parts[0]}\"<font face=/font/license_plate/{country}.font>{parts[1]}</font>\"\n'
                             lines.append(line)
+                            # TODO check what needs to happen in combination with custom lp fonts
                         elif "background_front" in line:
                             f_lp_mat = line.split(":")[1].strip()
                         elif "background_rear" in line:
@@ -274,7 +281,6 @@ def create_lp_defs(country_abs, types_to_create):
                         if candidate in line:
                             found_vehicle = True
                             vehicle_type = candidate
-                # make it so that truck and trailer are always exported, if not specified they receive the same as car
     return country_lp_types
 
 
@@ -294,7 +300,7 @@ def create_country_data(country_abs, vehicles_country, type, country_lps, spawn_
         national_ratio = spawn_config[country]["national"]
         foreign_ratios = spawn_config[country]["international"].copy()
 
-        # retrieve random countries, and calculate spawn_ratio
+        # retrieve random countries, and calculate spawn ratios
         random_countries = [c for c in country_abs.keys() if
                             c not in map(lambda x: x[0], foreign_ratios) and c != country]
         random_ratio = max(0.001, spawn_config[country]["random"] / len(random_countries))
@@ -326,7 +332,7 @@ def generate_lp_mats(country, country_abs, foreign_ratios, type, country_lps):
         for src_file in src_files:
             with open(src_file, "r", encoding="utf-8") as src:
                 data = src.readlines()
-                post_fix = "" if type == "trailer" else ("_f" if "front" in src_file  else "_r")
+                post_fix = "" if type == "trailer" else ("_f" if "front" in src_file else "_r")
                 dst_file = f"{dst_dir}\\{type}_{country_abs[foreign_country]}{post_fix}.mat"
                 with open(dst_file, "w", encoding="utf-8") as dst:
                     for line in data:
