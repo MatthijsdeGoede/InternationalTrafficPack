@@ -39,140 +39,17 @@ vanilla_truck_list = [
 ]
 
 vanilla_trailer_list = [
-    "truck_transporter_traffic",
-    "car_transporter_traffic",
-    "scs_curtain_traffic",
-    "scs_reefer_traffic",
-    "scs_dryvan_traffic",
-    "glass_trailer_traffic",
-    "scs_flatbed_brick_traffic",
-
-    # DLC Krone
-
-    "krone_profiliner_2017_traffic",
-    "krone_coolliner_2017_traffic",
-
-    ## DLC Feldbinder
-
-    "feldbinder_eut_35_traffic",
-    "feldbinder_kip_60_traffic",
-    "feldbinder_tsa_adr_22_traffic",
-
-    ## DLC Schwarzmuller
-
-    "schwarzmuller_curtain_traffic",
-    "schwarzmuller_reefer_traffic",
-    "schwarzmuller_cistern_food_traffic",
-
-    ## DLC Wielton
-
-    "wielton_curtain_master_traffic",
-    "wielton_dry_master_traffic",
-]
-
-tirsan_trailer_list = [
-    # DLC Tirsan
-
-    "tirsan_scs_traffic",
-    "tirsan_sri_traffic",
-    #"tirsan_sks_traffic",
-    #"tirsan_spl_traffic",
-    #"tirsan_shg_traffic",
-    #"tirsan_shf_traffic",
-]
-
-extra_list = [
-    "scs_dryvan_mfloor_traffic",
-    "scs_aero_dynamic_traffic",
-    "willig_fuel_cistern_traffic",
-
-    # double
-    #"scs_curtain_bdouble_traffic",
-    #"scs_curtain_double_traffic",
-
-    #"scs_reefer_bdouble_traffic",
-    #"scs_reefer_double_traffic",
-
-    #"scs_dryvan_bdouble_traffic",
-    #"scs_dryvan_double_traffic",
-
-    # food trailer
-    "scs_foodtank_traffic",
-
-    # log trailer
-    "scs_log_traffic",
-    "scs_gooseneck_traffic",
-
-    # food trailer
-    "scs_foodtank_traffic",
-
-    # lowbed
-    "scs_lowbed_traffic",
-
-    # lowloader
-    "scs_lowloader_traffic",
-
-    "van_transporter_traffic",
-
-    #dumper
-    #"scs_dumper_traffic",
-
-    #fueltank
-    "scs_fueltank_traffic",
-    #silo
-    "scs_silo_traffic",
-
-    #chemtank
-    "scs_chemtank_traffic",
-
-    #gastank
-    "scs_gastank_traffic",
-
-    # livestock trailer
-    "scs_livestock_traffic",
-
-
-    ## DLC Schwarzmuller
-
-    "schwarzmuller_slidepost_traffic",
-    "schwarzmuller_lowloader_traffic",
-
-
-    # DLC Krone
-
-    "krone_profiliner_hd_2017_traffic",
-    "krone_profiliner_bm_traffic",
-    "krone_dryliner_2017_traffic",
-    "krone_boxliner_2017_traffic",
-
-
-    ## DLC North
-
-    "scs_dry_van_3_stw_traffic.dlc_north",
-    "scs_curtain_3_stw_traffic.dlc_north",
-    "scs_m_floor_3_stw_traffic.dlc_north",
-    "scs_reefer_3_stw_traffic.dlc_north",
-
-    # DLC Feldbinder
-    "feldbinder_tsa_lm_32_traffic",
-
-    # lowbed
-    "scs_lowbed_traffic.dlc_north",
-
-    ## DLC Trailers
-
-    # lowbed
-    #"scs_lowbed_traffic.dlc_trailers",
-    # lowloader
-    "scs_lowloader_traffic.dlc_trailers",
-
-
-    ## DLC Wielton
-
-    #"wielton_dropside_master_traffic",
-    #"wielton_weight_master_traffic",
-    #"wielton_strong_master_traffic",
-
+    "scs_curtain_traffic", #2 variants
+    "scs_reefer_traffic", #1 variant
+    "scs_dryvan_traffic", #1 variant
+    "scs_dryvan_mfloor_traffic", #1 variant
+    "scs_foodtank_traffic", #2 variants
+    "scs_chemtank_traffic", #1 variant
+    "scs_silo_traffic", #1 variant
+    "scs_aero_dynamic_traffic", #1 variant
+    "car_transporter_traffic", #4 variants
+    "scs_gooseneck_traffic", #5 variants
+    "scs_flatbed_brick_traffic", #9 variants
 ]
 
 spawn_config = {
@@ -384,12 +261,6 @@ country_lps = create_lp_defs(country_abbreviations, ["car", "truck", "trailer"])
 truck_variant_dict, trucks_per_country = get_vehicles_per_country(country_abbreviations, vanilla_truck_list)
 # get all specified vanilla trailers from traffic
 trailer_variant_dict, trailer_per_country = get_vehicles_per_country(country_abbreviations, vanilla_trailer_list, src_dir=trailer_src_dir)
-
-# limit the tirsan trailers to be associated with turkish trucks only
-tirsan_var_dict, tirsan_per_country = get_vehicles_per_country(country_abbreviations, tirsan_trailer_list, src_dir=trailer_src_dir, limited_to=["turkey"])
-trailer_variant_dict.update(tirsan_var_dict)
-trailer_per_country.update(tirsan_per_country)
-
 # make a trailer def for each trailer for each country, set custom license plate
 create_vehicle_traffic_defs(trailer_per_country, trailer_variant_dict, trailer_type_string, src_dir=trailer_src_dir, dst_dir=trailer_dst_dir)
 # make a truck def for each truck for each country, set spawn_ratio to 0, custom license plate and link with all country trailers via trailer_chains

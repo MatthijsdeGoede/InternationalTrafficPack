@@ -1,5 +1,6 @@
 import itertools
 import os
+import random
 
 base_folder = "D:\\ETS2 Blender\\BaseFolder(1.48)\\"
 mod_folder = "C:\\Users\\Matth\\Desktop\\International Traffic Pack - Vanilla Edition\\"
@@ -193,10 +194,10 @@ def create_vehicle_traffic_defs(vehicle_country_dict, variant_dict, type_string,
                                 dst.write(f"\tspawn_ratio: 0\n\tlicense_plate_type: {type_string}_{country_code}\n\n")
                                 dst.write(f"@include \"/def/vehicle/ai/drivers{input_line.split('drivers')[1]}\n")
                             elif is_truck and "trailer_chains[]:" in input_line:
-                                for trailer in trailer_chains:
+                                for trailer in random.sample(list(trailer_chains.items()), 5):
                                     # check if trailer is suitable for this foreign country
-                                    if trailer_chains[trailer][country_code] > 0:
-                                        dst.write(f"\ttrailer_chains[]: \"traffic.trailer.{trailer}.{country_code}\"\n")
+                                    if trailer[1][country_code] > 0:
+                                        dst.write(f"\ttrailer_chains[]: \"traffic.trailer.{trailer[0]}.{country_code}\"\n")
                             elif is_trailer and "cargo_mass:" in input_line:
                                 dst.write(f"\tlicense_plate_type: {type_string}_{country_code}\n\n")
                                 dst.write(output_line)
