@@ -83,7 +83,7 @@ spawn_config = {
         "random": 0.10,
     },
     "france": {
-        "national": 0.79,
+        "national": 0.60,
         "international": [("poland", 0.06), ("belgium", 0.04), ("spain", 0.04), ("lithuania", 0.03),
                           ("luxembourg", 0.03), ("uk", 0.02), ("romania", 0.02), ("germany", 0.02), ("italy", 0.01),
                           ("portugal", 0.01), ("netherlands", 0.01), ("switzerland", 0.01)],
@@ -171,8 +171,8 @@ spawn_config = {
     },
     "hungary": {
         "national": 0.60,
-        "international": [("poland", 0.06), ("romania", 0.06), ("slovakia", 0.05), ("romania", 0.05), ("turkey", 0.02),
-                          ("czechia", 0.01), ("germany", 0.01), ("austria", 0.01), ("croatia", 0.01), ("serbia", 0.01)],
+        "international": [("poland", 0.08), ("romania", 0.06), ("slovakia", 0.05), ("turkey", 0.04),
+                          ("czech", 0.02), ("germany", 0.02), ("austria", 0.02), ("croatia", 0.01), ("serbia", 0.01)],
         "random": 0.10,
     },
     "switzerland": {
@@ -197,7 +197,7 @@ spawn_config = {
     "denmark": {
         "national": 0.60,
         "international": [("poland", 0.08), ("norway", 0.05), ("sweden", 0.05), ("germany", 0.04), ("lithuania", 0.03),
-                          ("romania", 0.02), ("netherlands", 0.02), ("czechia", 0.01)],
+                          ("romania", 0.02), ("netherlands", 0.02), ("czech", 0.01)],
         "random": 0.10,
     },
     "czech": {
@@ -215,60 +215,68 @@ spawn_config = {
     },
     "slovakia": {
         "national": 0.60,
-        "international": [("czechia", 0.12), ("poland", 0.09), ("hungary", 0.07), ("austria", 0.01), ("germany", 0.1)],
+        "international": [("czech", 0.12), ("poland", 0.09), ("hungary", 0.07), ("austria", 0.01), ("germany", 0.1)],
         "random": 0.10,
     },
-    "albania": {  ## TODO: configure below
+    "albania": {
         "national": 0.79,
-        "international": [("montenegro", 0.05), ("kosovo", 0.05), ("macedonia", 0.06), ("germany", 0.01),
-                          ("serbia", 0.03)],
+        "international": [("montenegro", 0.04), ("kosovo", 0.04), ("macedonia", 0.05), ("italy", 0.03),
+                          ("serbia", 0.03), ("germany", 0.01)],
         "random": 0.01,
     },
     "bosnia": {
-        "national": 0.79,
-        "international": [("montenegro", 0.06), ("croatia", 0.06), ("serbia", 0.06), ("hungary", 0.01)],
+        "national": 0.89,
+        "international": [("germany", 0.03), ("austria", 0.02), ("montenegro", 0.01), ("croatia", 0.01),
+                          ("serbia", 0.02), ("hungary", 0.01)],
         "random": 0.01,
     },
     "croatia": {
         "national": 0.79,
-        "international": [("montenegro", 0.02), ("slovenia", 0.05), ("hungary", 0.03), ("bosnia", 0.04),
-                          ("serbia", 0.03), ("germany", 0.02), ("netherlands", 0.01)],
+        "international": [("slovenia", 0.03), ("poland", 0.03), ("hungary", 0.03), ("germany", 0.03),
+                          ("slovakia", 0.02), ("turkey", 0.01), ("italy", 0.01), ("lithuania", 0.01),
+                          ("montenegro", 0.01), ("bosnia", 0.01), ("serbia", 0.01)],
         "random": 0.01,
     },
     "kosovo": {
         "national": 0.79,
-        "international": [("montenegro", 0.03), ("serbia", 0.08), ("macedonia", 0.05), ("albania", 0.04)],
+        "international": [("montenegro", 0.03), ("serbia", 0.08), ("macedonia", 0.03), ("albania", 0.08)],
         "random": 0.01,
     },
     "macedonia": {
         "national": 0.79,
-        "international": [("kosovo", 0.04), ("turkey", 0.02), ("bulgaria", 0.05), ("serbia", 0.04), ("albania", 0.05)],
+        "international": [("turkey", 0.06), ("kosovo", 0.03), ("bulgaria", 0.03), ("serbia", 0.04), ("albania", 0.04)],
         "random": 0.01,
     },
     "montenegro": {
         "national": 0.79,
-        "international": [("bosnia", 0.05), ("croatia", 0.02), ("serbia", 0.05), ("kosovo", 0.04), ("albania", 0.04)],
+        "international": [("germany", 0.04), ("bosnia", 0.03), ("croatia", 0.02), ("serbia", 0.03), ("kosovo", 0.04),
+                          ("albania", 0.04)],
         "random": 0.01,
     },
     "serbia": {
-        "national": 0.79,
-        "international": [("montenegro", 0.02), ("bosnia", 0.03), ("hungary", 0.03), ("bulgaria", 0.03),
-                          ("kosovo", 0.03), ("turkey", 0.02), ("macedonia", 0.02), ("croatia", 0.02)],
+        "national": 0.69,
+        "international": [("turkey", 0.08), ("romania", 0.06), ("hungary", 0.5), ("bulgaria", 0.03),
+                          ("montenegro", 0.02), ("bosnia", 0.02), ("kosovo", 0.01), ("macedonia", 0.02),
+                          ("croatia", 0.01)],
         "random": 0.01,
     },
     "slovenia": {
-        "national": 0.79,
-        "international": [("croatia", 0.05), ("austria", 0.05), ("italy", 0.04), ("hungary", 0.03),
-                          ("bosnia", 0.02), ("germany", 0.01)],
-        "random": 0.01,
+        "national": 0.65,
+        "international": [("romania", 0.06), ("poland", 0.04), ("slovakia", 0.04), ("hungary", 0.03), ("turkey", 0.03),
+                          ("italy", 0.02), ("austria", 0.02), ("slovenia", 0.01), ("croatia", 0.01), ("serbia", 0.01),
+                          ("bulgaria", 0.01), ("macedonia", 0.01), ("bosnia", 0.01)],
+        "random": 0.05,
     },
 }
 
 truck_type_string = "truck"
 trailer_type_string = "trailer"
 
+
 # get all countries and their abbreviations
 country_abbreviations = get_country_abbreviations()
+# ensure that the spawn configuration is of the correct format
+assert check_spawn_ratios(spawn_config, country_abbreviations)
 # create license plate definitions
 country_lps = create_lp_defs(country_abbreviations, ["car", "truck", "trailer"])
 # get all specified trucks from traffic

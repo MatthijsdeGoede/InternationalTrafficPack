@@ -279,11 +279,13 @@ spawn_config = {
     },
 }
 
-
 type_string = "car"
+
 
 # get all countries and their abbreviations
 country_abbreviations = get_country_abbreviations()
+# ensure that the spawn configuration is of the correct format
+assert check_spawn_ratios(spawn_config, country_abbreviations)
 # create license plate definitions
 country_lps = create_lp_defs(country_abbreviations, ["car"])
 # get all specified cars from traffic

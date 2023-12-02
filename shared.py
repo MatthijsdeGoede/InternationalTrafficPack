@@ -1,6 +1,6 @@
 import itertools
 import os
-import random
+import shutil
 
 base_folder = "D:\\ETS2 Blender\\BaseFolder(1.48)\\"
 mod_folder = "C:\\Users\\Matth\\Desktop\\International Traffic Pack - Vanilla Edition\\"
@@ -46,8 +46,8 @@ def get_country_abbreviations():
     return country_dict
 
 
-def get_limited_spawn_rates(country_dict, limited_to):
-    return {country_dict[country]: 1.00 if limited_to is None or country in limited_to else 0.00 for country in
+def get_limited_spawn_rates(country_dict, limited_to, rate=1.00):
+    return {country_dict[country]: rate if limited_to is None or country in limited_to else 0.00 for country in
             country_dict}
 
 
@@ -60,15 +60,21 @@ def get_vehicles_per_country(country_dict, vehicle_list, check_spawn_rates=False
     for vehicle in vehicle_list:
         vehicle_src_file = os.path.join(src_dir, f'{vehicle}.sui')
         with open(vehicle_src_file, "r", encoding="utf-8") as src:
+            variant_name = None
+            rate = 1.00
             for input_line in src:
-                # find first entry
                 if "traffic_vehicle" in input_line or "traffic_trailer" in input_line:
-                    # TODO: take the actual spawn rate from the vehicle definitions to prevent rare cars from spawning frequently abroad
-                    # assume standard 1.00 spawn rate for all variants and update this based on the traffic definitions
+                    finding_spawn_rate = True
                     variant_name = prepare_internal_name(input_line)
+                elif "spawn_ratio" in input_line:
+                    # assume standard 1.00 spawn rate, if custom spawn rate is specified, use this
+                    rate = float(input_line.split(":")[1].strip())
+                elif finding_spawn_rate and "}" in input_line:
+                    finding_spawn_rate = False
                     variant_dict[variant_name] = vehicle
-
-                    vehicle_country_dict[variant_name] = get_limited_spawn_rates(country_dict, limited_to)
+                    # limit spawning to a given set of countries if provided
+                    vehicle_country_dict[variant_name] = get_limited_spawn_rates(country_dict, limited_to, rate)
+                    rate = 1.00
                     # when working with sub variants, only the top variant should be added to the variant dict
                     if first_variant_only:
                         break
@@ -95,6 +101,7 @@ def adapt_spawn_rates(country_dict, vehicle_country_dict):
 
 
 def create_chassis(vehicle, line, country_code, dst_dir=vehicle_dst_dir):
+    # create eu or uk chassis to ensure the steering wheel is always on the right side
     chassis_base = line.split("/")[-1].split(".")[0]
     chassis_path = get_os_path(line.split('\"')[1])
     chassis_src_path = f"{base_folder}{chassis_path}"
@@ -121,6 +128,7 @@ def create_chassis(vehicle, line, country_code, dst_dir=vehicle_dst_dir):
 
 
 def get_characters_surrounding_substring(input_string, substring):
+    # return the character proceeding and following the substring
     index = input_string.find(substring)
     ancestor = input_string[index - 1] if index > 0 else ""
     successor = input_string[index + len(substring)] if index > 0 and index + len(substring) < len(
@@ -171,21 +179,24 @@ def create_vehicle_traffic_defs(vehicle_country_dict, variant_dict, type_string,
                         is_truck = type_string == "truck"
                         is_trailer = type_string == "trailer"
                         for i, input_line in enumerate(data):
+                            # gather original accessory and vehicle variant names
                             if "accessories[]:" in input_line and is_trailer:
                                 accessory_name = prepare_internal_name(input_line, is_accessory=True)
                                 accessories.add(accessory_name)
                             if "vehicle_accessory" in input_line and ".chassis" in input_line and not is_trailer:
+                                # create eu or uk chassis to ensure the steering wheel is always on the right side
                                 chassis_name = create_chassis(variant_dict[vehicle], data[i + 2], country_code,
                                                               dst_dir=dst_dir)
                             if "variant" in input_line or "traffic_vehicle" in input_line or "traffic_trailer" in input_line:
                                 candidate_name = prepare_internal_name(input_line)
                                 is_new = True
+                                # only consider variant names which are not a substring of others
                                 for variant in variants:
                                     if variant in candidate_name:
                                         is_new = False
                                 if is_new:
                                     variants.add(candidate_name)
-
+                            # create unique internal names for the accessories and variants based on the country_code
                             output_line = replace_longest_substring(input_line, variants | accessories, country_code)
                             if "traffic_trailer" in output_line:
                                 trailer_name = prepare_internal_name(output_line)
@@ -194,29 +205,34 @@ def create_vehicle_traffic_defs(vehicle_country_dict, variant_dict, type_string,
                                 variant_name = prepare_internal_name(output_line)
                                 dst.write(f"	variant[]: traffic.trailer.{variant_name}\n")
                             elif "@include \"drivers" in input_line:
-                                dst.write(f"\tspawn_ratio: 0\n\tlicense_plate_type: {type_string}_{country_code}\n\n")
+                                # set spawn ratio, parking settings and license plate type for non trailer types
+                                dst.write(
+                                    f"\tspawn_ratio: 0\n\tallow_parked: true\n\tlicense_plate_type: {type_string}_{country_code}\n\n")
                                 dst.write(f"@include \"/def/vehicle/ai/drivers{input_line.split('drivers')[1]}\n")
                             elif is_truck and "trailer_chains[]:" in input_line:
-                                # TODO investigate whether this is desired still, should be all trailers right?
-                                for trailer in random.sample(list(trailer_chains.items()), 5):
-                                    # check if trailer is suitable for this foreign country
+                                # match the truck with trailers of the corresponding country
+                                for trailer in trailer_chains.items():
                                     if trailer[1][country_code] > 0:
                                         dst.write(
                                             f"\ttrailer_chains[]: \"traffic.trailer.{trailer[0]}.{country_code}\"\n")
                             elif is_trailer and "cargo_mass:" in input_line:
+                                # set custom license plate type for trailer type
                                 dst.write(f"\tlicense_plate_type: {type_string}_{country_code}\n\n")
                                 dst.write(output_line)
                             elif "data_path:" in input_line and chassis_name is not None:
+                                # in case of a custom chassis, link to the newly created chassis file
                                 dst.write(
                                     f'\tdata_path: \"/def/vehicle/ai/{sub_dir}/{variant_dict[vehicle]}/{chassis_name}.sii\"\n')
                                 chassis_name = None
-                            elif "spawn_ratio" in output_line:
+                            elif "spawn_ratio" in output_line or "allow_parked" in output_line:
+                                # ignore the old spawn and parking settings
                                 continue
                             else:
                                 dst.write(output_line)
 
 
 def prepare_internal_name(input_line, is_accessory=False):
+    # deal with inconsistent internal names specified by scs
     split_line = input_line.split(".")[1:]
     accessory = ".".join(split_line[:-1] if is_accessory else split_line).split(" ")[0].strip()
     accessory = accessory.replace("traffic.", "")
@@ -240,6 +256,8 @@ def create_lp_defs(country_abs, types_to_create):
             f_lp_mat = "front"
             r_lp_mat = "rear"
             lines = []
+            templates = []
+            found_custom_font = False
             for line in src:
                 if found_vehicle:
                     if "{" not in line and "}" not in line:
@@ -254,31 +272,47 @@ def create_lp_defs(country_abs, types_to_create):
                             parts = line.split('\"')
                             line = f'{parts[0]}\"<font face=/font/license_plate/{country}.font>{parts[1]}</font>\"\n'
                             lines.append(line)
-                            # TODO check what needs to happen in combination with custom lp fonts
+                            templates.append((len(lines) - 1, parts))
+                        # retrieve custom license plate materials
                         elif "background_front" in line:
                             f_lp_mat = line.split(":")[1].strip()
                         elif "background_rear" in line:
                             r_lp_mat = line.split(":")[1].strip()
+                        elif "<font" in line:
+                            # custom font settings found, specify country font face here
+                            found_custom_font = True
+                            lines.append(line.replace("<font", f"<font face=/font/license_plate/{country}.font"))
                         else:
                             lines.append(line)
                     elif "}" in line:
+                        side_mats = []
                         lp_dst_file = os.path.join(lp_dst_dir, f'lp_{vehicle_type}_{country_abs[country]}.sui')
+                        if found_custom_font:
+                            # remove our font wrap from the templates lines again to prevent warnings
+                            for (index, info) in templates:
+                                lines[index] = f'{info[0]}\"{info[1]}\"\n'
                         with open(lp_dst_file, "w", encoding="utf-8") as dst:
                             for line_to_write in lines:
                                 dst.write(line_to_write)
+                                # save materials specified with $SIDE$
+                                if "$SIDE$" in line_to_write:
+                                    side_mats.append(line_to_write.split("$SIDE$")[1].split(".")[0])
+                        # save the lp materials for this country and vehicle type
                         if country in country_lp_types:
-                            country_lp_types[country][vehicle_type] = (f_lp_mat, r_lp_mat)
+                            country_lp_types[country][vehicle_type] = (f_lp_mat, r_lp_mat, side_mats)
                         else:
-                            country_lp_types[country] = {vehicle_type: (f_lp_mat, r_lp_mat)}
+                            country_lp_types[country] = {vehicle_type: (f_lp_mat, r_lp_mat, side_mats)}
                         lines = []
+                        templates = []
                         found_vehicle = False
+                        found_custom_font = False
                         wrote_mat = False
                         vehicle_type = None
                         f_lp_mat = "front"
                         r_lp_mat = "rear"
                 elif "license_plate_data" in line:
                     for candidate in types_to_create:
-                        if candidate in line:
+                        if candidate in line and f"{candidate}_" not in line:
                             found_vehicle = True
                             vehicle_type = candidate
     return country_lp_types
@@ -324,21 +358,32 @@ def generate_lp_mats(country, country_abs, foreign_ratios, type, country_lps):
         foreign_country = ratio[0]
         # check if type is available, else use fallback car type
         if type in country_lps[foreign_country]:
-            f_mat, r_mat = country_lps[foreign_country][type]
+            f_mat, r_mat, side_mats = country_lps[foreign_country][type]
         else:
-            f_mat, r_mat = country_lps[foreign_country]["car"]
+            f_mat, r_mat, side_mats = country_lps[foreign_country]["car"]
         src_files = [f"{material_src_dir}{foreign_country}/{f_mat}.mat",
                      f"{material_src_dir}{foreign_country}/{r_mat}.mat"]
-        for src_file in src_files:
+
+        for side, src_file in enumerate(src_files):
             with open(src_file, "r", encoding="utf-8") as src:
                 data = src.readlines()
-                post_fix = "" if type == "trailer" else ("_f" if "front" in src_file else "_r")
-                dst_file = f"{dst_dir}\\{type}_{country_abs[foreign_country]}{post_fix}.mat"
+                post_fix = "" if type == "trailer" else ("_f" if side == 0 else "_r")
+                plate_name = f"{type}_{country_abs[foreign_country]}{post_fix}"
+                dst_file = f"{dst_dir}\\{plate_name}.mat"
                 with open(dst_file, "w", encoding="utf-8") as dst:
                     for line in data:
                         if "texture" in line and "_name" not in line:
                             line = line.replace('\"', f'\"/material/ui/lp/{foreign_country}/', 1)
                         dst.write(line)
+                # generate materials required for the $SIDE$ parameter
+                for side_mat in side_mats:
+                    original_prefix = "front" if side == 0 else "rear"
+                    copy_src = f"{material_src_dir}{foreign_country}/{original_prefix}{side_mat}.mat"
+                    copy_dst_folder = f"{material_dst_dir}{foreign_country}"
+                    copy_dst = f"{copy_dst_folder}/{plate_name}{side_mat}.mat"
+                    if not os.path.exists(copy_dst_folder):
+                        os.makedirs(copy_dst_folder)
+                    shutil.copy(copy_src, copy_dst)
 
 
 def generate_spawn_info(vehicles_country, country_abs, foreign_ratios, national_ratio, traffic_dst_dir, type):
@@ -369,3 +414,19 @@ def generate_lp_data(country_abs, foreign_ratios, traffic_dst_dir, type, country
             dst.write(
                 f"license_plate_data : .lp.{type}_{foreign_abs}\n{{\n\ttype: {type}_{foreign_abs}\n@include \"/def/country/{foreign_country}/lp_{lp_ref}_{foreign_abs}.sui\"\n}}\n\n")
         dst.write("}")
+
+
+def check_spawn_ratios(spawn_config, country_abbreviations):
+    supported_countries = set(country_abbreviations.keys())
+    for country in spawn_config:
+        foreign_countries = set()
+        for ratio in spawn_config[country]["international"]:
+            foreign_country = ratio[0]
+            if foreign_country in foreign_countries:
+                print(f"Country {foreign_country} appears more than once in spawn configuration for {country}")
+                return False
+            elif foreign_country not in supported_countries:
+                print(f"Unsupported country {foreign_country} in spawn configuration for {country}")
+                return False
+            foreign_countries.add(foreign_country)
+    return True
