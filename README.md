@@ -11,7 +11,7 @@ experimenting with custom license plates for the ProMods map mod, I discovered a
 Hence, I was determined to show its potential and built custom code to produce this rather complex mod.
 
 # Resulting mod
-To download the resulting mods and find more information about them, please visit the [official forum thread]([car_vanilla.py](https://forum.scssoft.com/viewtopic.php?t=324065)) on the SCS forum 
+To download the resulting mods and find more information about them, please visit the [official forum thread](https://forum.scssoft.com/viewtopic.php?t=324065) on the SCS forum 
 
 # Technicalities
 * The code is written in Python
