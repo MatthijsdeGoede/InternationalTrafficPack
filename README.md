@@ -27,8 +27,8 @@ To download the resulting mods and find more information about them, please visi
 * Feel free to produce add-ons featuring additional countries and/or vehicles yourself using my code or an adaptation of it, under the condition that credits are given.
 * If you have any feedback on how to improve the parameters, please let me know via the official thread in the SCS forum or open an issue on GitHub.
 
-## Credits
-Code and mod author: Elitesquad Modz
+### Credits
+Code and mod author: Elitesquad Modz  
 Research, reference & technical assist: The ProMods Team, Ultras KP, Daniminho 
 
 Copyright © 2023 All Rights Reserved
