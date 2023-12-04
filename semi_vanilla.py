@@ -62,10 +62,10 @@ spawn_config = {
     },
     "germany": {
         "national": 0.60,
-        "international": [("poland", 0.14), ("netherlands", 0.03), ("lithuania", 0.03), ("romania", 0.02),
+        "international": [("poland", 0.13), ("netherlands", 0.03), ("lithuania", 0.03), ("romania", 0.02),
                           ("austria", 0.01), ("czech", 0.01), ("bulgaria", 0.01), ("slovenia", 0.01),
                           ("hungary", 0.01), ("luxembourg", 0.01), ("denmark", 0.01), ("france", 0.01),
-                          ("switzerland", 0.01)],
+                          ("switzerland", 0.01), ("portugal", 0.01)],
         "random": 0.10,
     },
     "austria": {
@@ -77,16 +77,16 @@ spawn_config = {
     },
     "belgium": {
         "national": 0.60,
-        "international": [("netherlands", 0.07), ("luxembourg", 0.06), ("poland", 0.05), ("france", 0.04),
+        "international": [("netherlands", 0.07), ("luxembourg", 0.05), ("poland", 0.05), ("france", 0.04),
                           ("romania", 0.02), ("uk", 0.02), ("lithuania", 0.01), ("germany", 0.01), ("italy", 0.01),
-                          ("hungary", 0.01)],
+                          ("hungary", 0.01), ("portugal", 0.01)],
         "random": 0.10,
     },
     "france": {
         "national": 0.60,
         "international": [("poland", 0.06), ("belgium", 0.04), ("spain", 0.04), ("lithuania", 0.03),
-                          ("luxembourg", 0.03), ("uk", 0.02), ("romania", 0.02), ("germany", 0.02), ("italy", 0.01),
-                          ("portugal", 0.01), ("netherlands", 0.01), ("switzerland", 0.01)],
+                          ("portugal", 0.03), ("uk", 0.02), ("romania", 0.02), ("germany", 0.02), ("italy", 0.01),
+                          ("luxembourg", 0.01), ("netherlands", 0.01), ("switzerland", 0.01)],
         "random": 0.10,
     },
     "luxembourg": {
@@ -135,14 +135,14 @@ spawn_config = {
     "portugal": {
         "national": 0.60,
         "international": [("spain", 0.07), ("romania", 0.04), ("poland", 0.04), ("france", 0.03), ("bulgaria", 0.02),
-                          ("lithuania", 0.02), ("uk", 0.02), ("luxembourg", 0.02), ("germany", 0.02), ("hungary", 0.01),
+                          ("lithuania", 0.02), ("uk", 0.02), ("czech", 0.02), ("germany", 0.02), ("hungary", 0.01),
                           ("slovenia", 0.01)],
         "random": 0.10,
     },
     "spain": {
         "national": 0.60,
         "international": [("portugal", 0.07), ("romania", 0.04), ("poland", 0.04), ("france", 0.03), ("bulgaria", 0.02),
-                          ("lithuania", 0.02), ("uk", 0.02), ("luxembourg", 0.02), ("germany", 0.02), ("hungary", 0.01),
+                          ("lithuania", 0.02), ("uk", 0.02), ("netherlands", 0.02), ("germany", 0.02), ("hungary", 0.01),
                           ("slovenia", 0.01)],
         "random": 0.10,
     },
