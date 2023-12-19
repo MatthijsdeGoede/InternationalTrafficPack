@@ -1,8 +1,8 @@
-from base_class import BaseClass
+from base import BaseCreator
 from configuration.vanilla import truck_spawn_config, truck_list, trailer_list
 
 
-class VanillaTruckCreator(BaseClass):
+class VanillaTruckCreator(BaseCreator):
     def __init__(self, base_folder, mod_folder, trailer_chains):
         super().__init__("truck", base_folder, mod_folder)
         self.trailer_chains = trailer_chains
@@ -24,9 +24,11 @@ class VanillaTruckCreator(BaseClass):
         self.create_traffic_storage_file(truck_list)
 
 
-class VanillaTrailerCreator(BaseClass):
+class VanillaTrailerCreator(BaseCreator):
     def __init__(self, base_folder, mod_folder):
         super().__init__("trailer", base_folder, mod_folder)
+        self.vehicle_src_dir = f"{base_folder}def\\vehicle\\trailer"
+        self.vehicle_dst_dir = f"{mod_folder}def\\vehicle\\trailer\\{self.sub_dir}"
 
     def run(self):
         # get all countries and their abbreviations
@@ -35,7 +37,7 @@ class VanillaTrailerCreator(BaseClass):
         self.create_lp_defs(["car", "truck", "trailer"])
         # get all specified trailers from traffic
         self.set_vehicles_per_country(trailer_list)
-        # make a truck def for each truck for each country and link with all country trailers via trailer_chains
+        # make a trailer definition
         self.create_vehicle_traffic_defs()
         # create all other country related files for the trailers
         self.create_country_data(truck_spawn_config)

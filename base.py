@@ -4,7 +4,7 @@ import shutil
 from utils.helper_methods import *
 
 
-class BaseClass:
+class BaseCreator:
     def __init__(self, type, base_folder, mod_folder):
         self.type = type
         self.base_folder = base_folder
@@ -21,9 +21,6 @@ class BaseClass:
         self.vehicle_country_dict = {}
         self.variant_dict = {}
         self.country_lp_types = {}
-
-        if not os.path.exists(self.vehicle_dst_dir):
-            os.makedirs(self.vehicle_dst_dir)
 
     def get_limited_spawn_rates(self, limited_to, rate=1.00):
         return {self.country_dict[country]: rate if limited_to is None or country in limited_to else 0.00 for country in
@@ -128,6 +125,8 @@ class BaseClass:
                 accessories = set()
                 data = src.readlines()
                 vehicle_dst_file = os.path.join(self.vehicle_dst_dir, f'{self.variant_dict[vehicle]}.sui')
+                if not os.path.exists(self.vehicle_dst_dir):
+                    os.makedirs(self.vehicle_dst_dir)
                 with open(vehicle_dst_file, "w", encoding="utf-8") as dst:
                     cnt = 0
                     for country_code in self.vehicle_country_dict[vehicle]:
@@ -337,7 +336,7 @@ class BaseClass:
             foreign_vehicles = [(vehicle[0], 1 * float(ratio[1]) / national_ratio * vehicle[1]) for vehicle in
                                 self.get_vehicles_for_country(foreign_abs) if vehicle[1] > 0]
             # generate a foreign traffic definition for this country
-            traffic_dst_file = os.path.join(traffic_dst_dir, f"traffic.{type}_{foreign_abs}.sii")
+            traffic_dst_file = os.path.join(traffic_dst_dir, f"traffic.{self.type}_{foreign_abs}.sii")
             with open(traffic_dst_file, "w", encoding="utf-8") as dst:
                 dst.write("SiiNunit\n{\n")
                 for foreign_vehicle in foreign_vehicles:

@@ -1,8 +1,8 @@
-from base_class import BaseClass
+from base import BaseCreator
 from configuration.vanilla import car_spawn_config, car_list
 
 
-class VanillaCarCreator(BaseClass):
+class VanillaCarCreator(BaseCreator):
     def __init__(self, base_folder, mod_folder):
         super().__init__("car", base_folder, mod_folder)
 
