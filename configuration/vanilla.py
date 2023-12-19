@@ -546,3 +546,7 @@ truck_spawn_config = {
         "random": 0.05,
     },
 }
+
+rhs_driver_countries = [
+    "gb"
+]

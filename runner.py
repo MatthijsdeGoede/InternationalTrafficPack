@@ -1,3 +1,4 @@
+from car_promods import ProModsCarCreator
 from car_vanilla import VanillaCarCreator
 from semi_vanilla import VanillaTruckCreator, VanillaTrailerCreator
 
@@ -16,4 +17,17 @@ def run_vanilla():
     truck_creator.run()
 
 
+def check_new_countries():
+    pm_folder = "D:\\SVN ProMods\\wip\\"
+    car_creator = VanillaCarCreator(base_folder, mod_folder)
+    pm_car_creator = ProModsCarCreator(pm_folder, mod_folder)
+    car_creator.set_country_dict()
+    pm_car_creator.set_country_dict()
+
+    for key in pm_car_creator.country_dict:
+        if key not in car_creator.country_dict.keys():
+            print(f"{key} ({pm_car_creator.country_dict[key]})")
+
+
+#check_new_countries()
 run_vanilla()

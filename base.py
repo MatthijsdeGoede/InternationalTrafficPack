@@ -9,12 +9,13 @@ class BaseCreator:
         self.type = type
         self.base_folder = base_folder
         self.mod_folder = mod_folder
+        self.search_folders = [base_folder]
         self.sub_dir = "esm"
-        self.country_src_dir = f"{self.base_folder}def\\country"
+        self.country_src_loc = "def\\country"
         self.country_dst_dir = f"{self.mod_folder}def\\country\\"
-        self.vehicle_src_dir = f"{self.base_folder}def\\vehicle\\ai"
+        self.vehicle_src_loc = "def\\vehicle\\ai"
         self.vehicle_dst_dir = f"{self.mod_folder}def\\vehicle\\ai\\{self.sub_dir}"
-        self.material_src_dir = f"{self.base_folder}\\material\\ui\\lp\\"
+        self.material_src_loc = f"material\\ui\\lp\\"
         self.material_dst_dir = f"{self.mod_folder}\\material\\ui\\lp\\"
 
         self.country_dict = {}
@@ -37,8 +38,9 @@ class BaseCreator:
             dst.write("}")
 
     def set_country_dict(self):
-        for filename in os.listdir(self.country_src_dir):
-            f = os.path.join(self.country_src_dir, filename)
+        country_src_dir = os.path.join(self.base_folder, self.country_src_loc)
+        for filename in os.listdir(country_src_dir):
+            f = os.path.join(country_src_dir, filename)
             if os.path.isfile(f):
                 country_name = filename.split(".")[0]
                 with open(f, encoding="utf8") as opened:
@@ -52,7 +54,7 @@ class BaseCreator:
 
         # retrieve the variants that belong to the selected vehicles
         for vehicle in vehicle_list:
-            vehicle_src_file = os.path.join(self.vehicle_src_dir, f'{vehicle}.sui')
+            vehicle_src_file = self.find_file(self.vehicle_src_loc, f'{vehicle}.sui')
             with open(vehicle_src_file, "r", encoding="utf-8") as src:
                 variant_name = None
                 rate = 1.00
@@ -80,7 +82,7 @@ class BaseCreator:
     def adapt_spawn_rates(self):
         # check the traffic definitions for custom spawn rates and adapt where needed
         for key in self.country_dict:
-            f = os.path.join(self.country_src_dir, key, 'traffic.sii')
+            f = self.find_file(self.country_src_loc, key, 'traffic.sii')
             with open(f, encoding="utf8") as opened:
                 for line1, line2 in itertools.zip_longest(*[opened] * 2):
                     if line2 is not None and "spawn_ratio: " in line2:
@@ -96,8 +98,8 @@ class BaseCreator:
         chassis_base = line.split("/")[-1].split(".")[0]
         chassis_path = get_os_path(line.split('\"')[1])
         chassis_src_path = f"{self.base_folder}{chassis_path}"
-        is_uk = country_code == "gb"
-        chassis_name = f'{chassis_base}_{"gb" if is_uk else "eu"}'
+        rhs_driver = country_code == "gb"
+        chassis_name = f'{chassis_base}_{"gb" if rhs_driver else "eu"}'
         chassis_dst_folder = f'{self.vehicle_dst_dir}\\{vehicle}\\'
         if not os.path.exists(chassis_dst_folder):
             os.makedirs(chassis_dst_folder)
@@ -106,12 +108,12 @@ class BaseCreator:
         with open(chassis_src_path, "r", encoding="utf-8") as src:
             with open(chassis_dst_path, "w", encoding="utf-8") as dst:
                 for input_line in src:
-                    if "variant:" in input_line and is_uk:
+                    if "variant:" in input_line and rhs_driver:
                         continue
-                    elif "variant_uk:" in input_line and is_uk:
+                    elif "variant_uk:" in input_line and rhs_driver:
                         variant_name = input_line.split(":")[1].strip()
                         dst.write(f"\tvariant: {variant_name}\n")
-                    elif "variant_uk:" in input_line and not is_uk:
+                    elif "variant_uk:" in input_line and not rhs_driver:
                         continue
                     else:
                         dst.write(input_line)
@@ -119,7 +121,7 @@ class BaseCreator:
 
     def create_vehicle_traffic_defs(self, trailer_chains={}):
         for vehicle in self.vehicle_country_dict:
-            vehicle_src_file = os.path.join(self.vehicle_src_dir, f'{self.variant_dict[vehicle]}.sui')
+            vehicle_src_file = self.find_file(self.vehicle_src_loc, f'{self.variant_dict[vehicle]}.sui')
             with open(vehicle_src_file, "r", encoding="utf-8") as src:
                 variants = set()
                 accessories = set()
@@ -191,7 +193,7 @@ class BaseCreator:
 
     def create_lp_defs(self, types_to_create):
         for country in self.country_dict:
-            lp_src_file = os.path.join(self.country_src_dir, country, 'license_plates.sii')
+            lp_src_file = self.find_file(self.country_src_loc, country, 'license_plates.sii')
             lp_dst_dir = f"{self.country_dst_dir}{country}"
             if not os.path.exists(lp_dst_dir):
                 os.makedirs(lp_dst_dir)
@@ -305,10 +307,11 @@ class BaseCreator:
                 f_mat, r_mat, side_mats = self.country_lp_types[foreign_country][self.type]
             else:
                 f_mat, r_mat, side_mats = self.country_lp_types[foreign_country]["car"]
-            src_files = [f"{self.material_src_dir}{foreign_country}/{f_mat}.mat",
-                         f"{self.material_src_dir}{foreign_country}/{r_mat}.mat"]
+            src_locs = [f"{self.material_src_loc}{foreign_country}/{f_mat}.mat",
+                         f"{self.material_src_loc}{foreign_country}/{r_mat}.mat"]
 
-            for side, src_file in enumerate(src_files):
+            for side, src_loc in enumerate(src_locs):
+                src_file = self.find_file(src_loc)
                 with open(src_file, "r", encoding="utf-8") as src:
                     data = src.readlines()
                     post_fix = "" if self.type == "trailer" else ("_f" if side == 0 else "_r")
@@ -322,7 +325,7 @@ class BaseCreator:
                     # generate materials required for the $SIDE$ parameter
                     for side_mat in side_mats:
                         original_prefix = "front" if side == 0 else "rear"
-                        copy_src = f"{self.material_src_dir}{foreign_country}/{original_prefix}{side_mat}.mat"
+                        copy_src = self.find_file(f"{self.material_src_loc}{foreign_country}/{original_prefix}{side_mat}.mat")
                         copy_dst_folder = f"{self.material_dst_dir}{foreign_country}"
                         copy_dst = f"{copy_dst_folder}/{plate_name}{side_mat}.mat"
                         if not os.path.exists(copy_dst_folder):
@@ -371,3 +374,10 @@ class BaseCreator:
                     return False
                 foreign_countries.add(foreign_country)
         return True
+
+    def find_file(self, *args):
+        for folder_path in self.search_folders:
+            file_path = os.path.join(folder_path, *args)
+            if os.path.exists(file_path):
+                return file_path
+        print(f"Could not find file: {args}")

@@ -27,7 +27,7 @@ class VanillaTruckCreator(BaseCreator):
 class VanillaTrailerCreator(BaseCreator):
     def __init__(self, base_folder, mod_folder):
         super().__init__("trailer", base_folder, mod_folder)
-        self.vehicle_src_dir = f"{base_folder}def\\vehicle\\trailer"
+        self.vehicle_src_loc = f"def\\vehicle\\trailer"
         self.vehicle_dst_dir = f"{mod_folder}def\\vehicle\\trailer\\{self.sub_dir}"
 
     def run(self):
