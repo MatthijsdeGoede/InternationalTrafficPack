@@ -1,3 +1,13 @@
+class VanillaConfiguration:
+    def __init__(self):
+        self.car_list = car_list
+        self.car_spawn_config = car_spawn_config
+        self.truck_list = truck_list
+        self.trailer_list = trailer_list
+        self.truck_spawn_config = truck_spawn_config
+        self.rhs_driver_countries = rhs_driver_countries
+
+
 car_list = [
     "a3",
     "accord",

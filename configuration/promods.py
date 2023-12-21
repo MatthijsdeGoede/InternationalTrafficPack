@@ -1,5 +1,14 @@
+from configuration.vanilla import VanillaConfiguration
+
+
+class ProModsConfiguration(VanillaConfiguration):
+    def __init__(self):
+        super().__init__()
+        self.rhs_driver_countries = rhs_driver_countries
+
+
 rhs_driver_countries = [
-    "gb", "cy", "gbg", "gbm", "irl", "m"
+    "gb", "cy", "gbg", "gbm", "irl", "m", "gbj"
 ]
 
 # New countries

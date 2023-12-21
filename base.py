@@ -93,12 +93,12 @@ class BaseCreator:
                             if vehicle in self.vehicle_country_dict:
                                 self.vehicle_country_dict[vehicle][self.country_dict[key]] = spawn_ratio
 
-    def create_chassis(self, vehicle, line, country_code):
+    def create_chassis(self, vehicle, line, country_code, rhs_countries):
         # create eu or uk chassis to ensure the steering wheel is always on the right side
         chassis_base = line.split("/")[-1].split(".")[0]
         chassis_path = get_os_path(line.split('\"')[1])
         chassis_src_path = f"{self.base_folder}{chassis_path}"
-        rhs_driver = country_code == "gb"
+        rhs_driver = country_code in rhs_countries
         chassis_name = f'{chassis_base}_{"gb" if rhs_driver else "eu"}'
         chassis_dst_folder = f'{self.vehicle_dst_dir}\\{vehicle}\\'
         if not os.path.exists(chassis_dst_folder):
@@ -119,7 +119,7 @@ class BaseCreator:
                         dst.write(input_line)
         return chassis_name
 
-    def create_vehicle_traffic_defs(self, trailer_chains={}):
+    def create_vehicle_traffic_defs(self, trailer_chains={}, rhs_countries=["gb"]):
         for vehicle in self.vehicle_country_dict:
             vehicle_src_file = self.find_file(self.vehicle_src_loc, f'{self.variant_dict[vehicle]}.sui')
             with open(vehicle_src_file, "r", encoding="utf-8") as src:
@@ -146,7 +146,8 @@ class BaseCreator:
                                     accessories.add(accessory_name)
                                 if "vehicle_accessory" in input_line and ".chassis" in input_line and not is_trailer:
                                     # create eu or uk chassis to ensure the steering wheel is always on the right side
-                                    chassis_name = self.create_chassis(self.variant_dict[vehicle], data[i + 2], country_code)
+                                    chassis_name = self.create_chassis(self.variant_dict[vehicle], data[i + 2],
+                                                                       country_code, rhs_countries)
                                 if "variant" in input_line or "traffic_vehicle" in input_line or "traffic_trailer" in input_line:
                                     candidate_name = prepare_internal_name(input_line)
                                     is_new = True
@@ -236,7 +237,8 @@ class BaseCreator:
                                 lines.append(line)
                         elif "}" in line:
                             side_mats = []
-                            lp_dst_file = os.path.join(lp_dst_dir, f'lp_{vehicle_type}_{self.country_dict[country]}.sui')
+                            lp_dst_file = os.path.join(lp_dst_dir,
+                                                       f'lp_{vehicle_type}_{self.country_dict[country]}.sui')
                             if found_custom_font:
                                 # remove our font wrap from the templates lines again to prevent warnings
                                 for (index, info) in templates:
@@ -308,7 +310,7 @@ class BaseCreator:
             else:
                 f_mat, r_mat, side_mats = self.country_lp_types[foreign_country]["car"]
             src_locs = [f"{self.material_src_loc}{foreign_country}/{f_mat}.mat",
-                         f"{self.material_src_loc}{foreign_country}/{r_mat}.mat"]
+                        f"{self.material_src_loc}{foreign_country}/{r_mat}.mat"]
 
             for side, src_loc in enumerate(src_locs):
                 src_file = self.find_file(src_loc)
@@ -325,7 +327,8 @@ class BaseCreator:
                     # generate materials required for the $SIDE$ parameter
                     for side_mat in side_mats:
                         original_prefix = "front" if side == 0 else "rear"
-                        copy_src = self.find_file(f"{self.material_src_loc}{foreign_country}/{original_prefix}{side_mat}.mat")
+                        copy_src = self.find_file(
+                            f"{self.material_src_loc}{foreign_country}/{original_prefix}{side_mat}.mat")
                         copy_dst_folder = f"{self.material_dst_dir}{foreign_country}"
                         copy_dst = f"{copy_dst_folder}/{plate_name}{side_mat}.mat"
                         if not os.path.exists(copy_dst_folder):
