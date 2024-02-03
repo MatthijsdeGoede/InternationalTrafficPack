@@ -300,10 +300,11 @@ class BaseCreator:
 
     def generate_lp_mats(self, country, foreign_ratios):
         dst_dir = f"{self.material_dst_dir}{country}"
+        is_car = self.type == "car"
         if not os.path.exists(dst_dir):
             os.makedirs(dst_dir)
-        for ratio in foreign_ratios:
-            foreign_country = ratio[0]
+        for entry in (foreign_ratios if is_car else self.country_dict):
+            foreign_country = entry[0] if is_car else entry
             # check if type is available, else use fallback car type
             if self.type in self.country_lp_types[foreign_country]:
                 f_mat, r_mat, side_mats = self.country_lp_types[foreign_country][self.type]
@@ -353,10 +354,11 @@ class BaseCreator:
 
     def generate_lp_data(self, foreign_ratios, traffic_dst_dir):
         lp_dst_file = os.path.join(traffic_dst_dir, f"license_plates.{self.type}_esm.sii")
+        is_car = self.type == "car"
         with open(lp_dst_file, "w", encoding="utf-8") as dst:
             dst.write("SiiNunit\n{\n")
-            for ratio in foreign_ratios:
-                foreign_country = ratio[0]
+            for entry in (foreign_ratios if is_car else self.country_dict):
+                foreign_country = entry[0] if is_car else entry
                 foreign_abs = self.country_dict[foreign_country]
                 lp_ref = self.type if self.type in self.country_lp_types[foreign_country] else "car"
                 dst.write(
