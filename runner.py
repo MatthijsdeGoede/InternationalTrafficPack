@@ -1,4 +1,6 @@
+from car_promods import ProModsCarCreator
 from car_vanilla import VanillaCarCreator
+from configuration.promods import ProModsConfiguration
 from configuration.vanilla import VanillaConfiguration
 from semi_vanilla import VanillaTruckCreator, VanillaTrailerCreator
 
@@ -20,4 +22,13 @@ def run_vanilla():
     truck_creator.create()
 
 
+def run_promods():
+    # retrieve the configuration for the ProMods mod
+    configuration = ProModsConfiguration()
+    # create car traffic
+    car_creator = ProModsCarCreator(base_folder, mod_folder, pm_folder, configuration)
+    car_creator.create()
+
+
 run_vanilla()
+# run_promods()

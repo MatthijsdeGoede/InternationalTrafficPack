@@ -38,20 +38,21 @@ class BaseCreator:
             dst.write("}")
 
     def set_country_dict(self):
-        country_src_dir = os.path.join(self.base_folder, self.country_src_loc)
-        for filename in os.listdir(country_src_dir):
-            f = os.path.join(country_src_dir, filename)
-            if os.path.isfile(f):
-                country_name = filename.split(".")[0]
-                with open(f, encoding="utf8") as opened:
-                    for line in opened:
-                        if "country_code:" in line:
-                            abbreviation = line.split("\"")[1]
-                            self.country_dict[country_name] = abbreviation.lower()
-                            break
+        for folder in self.search_folders:
+            country_src_dir = os.path.join(folder, self.country_src_loc)
+            for filename in os.listdir(country_src_dir):
+                f = os.path.join(country_src_dir, filename)
+                if os.path.isfile(f):
+                    country_name = filename.split(".")[0]
+                    with open(f, encoding="utf8") as opened:
+                        for line in opened:
+                            if "country_code:" in line:
+                                abbreviation = line.split("\"")[1]
+                                if country_name not in self.country_dict:
+                                    self.country_dict[country_name] = abbreviation.lower()
+                                break
 
     def set_vehicles_per_country(self, vehicle_list, check_spawn_rates=False, first_variant_only=True, limited_to=None):
-
         # retrieve the variants that belong to the selected vehicles
         for vehicle in vehicle_list:
             vehicle_src_file = self.find_file(self.vehicle_src_loc, f'{vehicle}.sui')
@@ -369,8 +370,10 @@ class BaseCreator:
         supported_countries = set(self.country_dict.keys())
         for country in spawn_config:
             foreign_countries = set()
+            ratios = 0
             for ratio in spawn_config[country]["international"]:
                 foreign_country = ratio[0]
+                ratios += ratio[1]
                 if foreign_country in foreign_countries:
                     print(f"Country {foreign_country} appears more than once in spawn configuration for {country}")
                     return False
@@ -378,6 +381,10 @@ class BaseCreator:
                     print(f"Unsupported country {foreign_country} in spawn configuration for {country}")
                     return False
                 foreign_countries.add(foreign_country)
+            ratio_sum = round(ratios + spawn_config[country]["national"] + spawn_config[country]["random"], 5)
+            if ratio_sum != 1.0:
+                print(f"Ratios in spawn configuration for {country} sum to {ratio_sum}")
+                return False
         return True
 
     def find_file(self, *args):

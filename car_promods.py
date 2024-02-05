@@ -22,7 +22,3 @@ class ProModsCarCreator(BaseCreator):
         self.create_country_data(self.configuration.car_spawn_config)
         # create a traffic storage file for the cars
         self.create_traffic_storage_file(self.configuration.car_list)
-
-
-# TODO: adapt methods so that they copy over @include files in lp defs
-# TODO: adapt methods to properly deal with custom fonts, so when font is specified explicitly
