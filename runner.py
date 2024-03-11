@@ -1,11 +1,9 @@
-import os
-
-from car_promods import ProModsCarCreator
-from car_vanilla import VanillaCarCreator
+from creators.car_promods import ProModsCarCreator
+from creators.car_vanilla import VanillaCarCreator
 from configuration.promods import ProModsConfiguration
 from configuration.vanilla import VanillaConfiguration
-from semi_promods import ProModsTrailerCreator, ProModsTruckCreator
-from semi_vanilla import VanillaTruckCreator, VanillaTrailerCreator
+from creators.semi_promods import ProModsTrailerCreator, ProModsTruckCreator
+from creators.semi_vanilla import VanillaTruckCreator, VanillaTrailerCreator
 
 mod_folder = "C:\\Users\\Matth\\Desktop\\International Traffic Pack - ProMods Edition\\"
 base_folder = "D:\\ETS2 Blender\\BaseFolder(1.48)\\"
@@ -39,5 +37,5 @@ def run_promods():
                                         trailer_creator.vehicle_country_dict, configuration)
     truck_creator.create()
 
-#run_vanilla()
-run_promods()
+run_vanilla()
+#run_promods()

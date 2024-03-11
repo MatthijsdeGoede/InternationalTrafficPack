@@ -15,13 +15,12 @@ To download the resulting mods and find more information about them, please visi
 
 ### Technicalities
 * The code is written in Python
-* Currently, code for trucks, trailers, and cars from the vanilla game has been implemented
+* Currently, code for trucks, trailers, and cars from the vanilla game and ProMods map mod has been implemented
 * Dictionaries are used to specify the spawn configuration per country and vehicle type, including:
   * The probability of spawning national traffic
   * The probabilities of spawning traffic from explicitly defined countries
   * The probabilities of spawning random traffic, which is uniformly distributed over the unspecified countries 
-* The spawn rate configuration for cars can be found [here](car_vanilla.py)  
-* The spawn rate configuration for semi-trucks can be found [here](semi_vanilla.py) 
+* The spawn rate configuration files can be found [here](configuration)
 
 ### Contribute to this project
 * Feel free to produce add-ons featuring additional countries and/or vehicles yourself using my code or an adaptation of it, under the condition that credits are given.
@@ -31,4 +30,4 @@ To download the resulting mods and find more information about them, please visi
 Code and mod author: Elitesquad Modz  
 Research, reference & technical assist: The ProMods Team, Ultras KP, Daniminho 
 
-Copyright © 2023 All Rights Reserved
+Copyright © 2024 All Rights Reserved
