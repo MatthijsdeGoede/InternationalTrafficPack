@@ -2,10 +2,10 @@ from base import BaseCreator
 
 
 class ProModsCarCreator(BaseCreator):
-    def __init__(self, base_folder, mod_folder, pm_folder, configuration):
+    def __init__(self, base_folder, mod_folder, lp_folder, pm_folder, configuration):
         super().__init__("car", base_folder, mod_folder)
         self.configuration = configuration
-        self.search_folders = [pm_folder, base_folder]
+        self.search_folders = [lp_folder, pm_folder, base_folder]
 
     def create(self):
         # set all countries and their abbreviations

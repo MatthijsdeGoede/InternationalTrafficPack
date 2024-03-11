@@ -38,6 +38,7 @@ class BaseCreator:
             dst.write("}")
 
     def set_country_dict(self):
+        abbreviations = set()
         for folder in self.search_folders:
             country_src_dir = os.path.join(folder, self.country_src_loc)
             for filename in os.listdir(country_src_dir):
@@ -47,9 +48,12 @@ class BaseCreator:
                     with open(f, encoding="utf8") as opened:
                         for line in opened:
                             if "country_code:" in line:
-                                abbreviation = line.split("\"")[1]
-                                if country_name not in self.country_dict:
-                                    self.country_dict[country_name] = abbreviation.lower()
+                                abbreviation = line.split("\"")[1].lower()
+                                if country_name not in self.country_dict and country_name != "monaco":
+                                    if abbreviation in abbreviations:
+                                        abbreviation += "_"
+                                    abbreviations.add(abbreviation)
+                                    self.country_dict[country_name] = abbreviation
                                 break
 
     def set_vehicles_per_country(self, vehicle_list, check_spawn_rates=False, first_variant_only=True, limited_to=None):
@@ -84,15 +88,16 @@ class BaseCreator:
         # check the traffic definitions for custom spawn rates and adapt where needed
         for key in self.country_dict:
             f = self.find_file(self.country_src_loc, key, 'traffic.sii')
-            with open(f, encoding="utf8") as opened:
-                for line1, line2 in itertools.zip_longest(*[opened] * 2):
-                    if line2 is not None and "spawn_ratio: " in line2:
-                        spawn_ratio = float(line2.split("spawn_ratio: ")[1].strip())
-                        # take the minimum of 1.00 and the specified spawn rate
-                        if spawn_ratio < 1.00:
-                            vehicle = ".".join(line1.split(".")[1:]).strip()
-                            if vehicle in self.vehicle_country_dict:
-                                self.vehicle_country_dict[vehicle][self.country_dict[key]] = spawn_ratio
+            if f:
+                with open(f, encoding="utf8") as opened:
+                    for line1, line2 in itertools.zip_longest(*[opened] * 2):
+                        if line2 is not None and "spawn_ratio: " in line2:
+                            spawn_ratio = float(line2.split("spawn_ratio: ")[1].strip())
+                            # take the minimum of 1.00 and the specified spawn rate
+                            if spawn_ratio < 1.00:
+                                vehicle = ".".join(line1.split(".")[1:]).strip()
+                                if vehicle in self.vehicle_country_dict:
+                                    self.vehicle_country_dict[vehicle][self.country_dict[key]] = spawn_ratio
 
     def create_chassis(self, vehicle, line, country_code, rhs_countries):
         # create eu or uk chassis to ensure the steering wheel is always on the right side
@@ -204,7 +209,6 @@ class BaseCreator:
                 # read the file and gather truck, trailer and car types if present
                 found_vehicle = False
                 vehicle_type = None
-                wrote_mat = False
                 f_lp_mat = "front"
                 r_lp_mat = "rear"
                 lines = []
@@ -215,25 +219,26 @@ class BaseCreator:
                         if "{" not in line and "}" not in line:
                             if "type:" in line:
                                 type_name = f"{vehicle_type}_{self.country_dict[country]}"
+                                post_fix = ("", "") if vehicle_type == "trailer" else ("_f", "_r")
+                                lines.append(
+                                    f'\tbackground_front: {type_name}{post_fix[0]}\n\tbackground_rear: {type_name}{post_fix[1]}\n\n')
                             elif "templates[]:" in line:
-                                if not wrote_mat:
-                                    post_fix = ("", "") if vehicle_type == "trailer" else ("_f", "_r")
-                                    lines.append(
-                                        f'\tbackground_front: {type_name}{post_fix[0]}\n\tbackground_rear: {type_name}{post_fix[1]}\n\n')
-                                    wrote_mat = True
                                 parts = line.split('\"')
-                                line = f'{parts[0]}\"<font face=/font/license_plate/{country}.font>{parts[1]}</font>\"\n'
+                                if "<font" not in line:
+                                    line = f'{parts[0]}\"<font face=/font/license_plate/{country}.font>{parts[1]}</font>\"\n'
                                 lines.append(line)
                                 templates.append((len(lines) - 1, parts))
                             # retrieve custom license plate materials
                             elif "background_front" in line:
-                                f_lp_mat = line.split(":")[1].strip()
+                                f_lp_mat = line.split(":")[1].strip().replace('\"', '')
                             elif "background_rear" in line:
-                                r_lp_mat = line.split(":")[1].strip()
+                                r_lp_mat = line.split(":")[1].strip().replace('\"', '')
                             elif "<font" in line:
                                 # custom font settings found, specify country font face here
                                 found_custom_font = True
-                                lines.append(line.replace("<font", f"<font face=/font/license_plate/{country}.font"))
+                                if "face=" not in line:
+                                    line = line.replace("<font", f"<font face=/font/license_plate/{country}.font")
+                                lines.append(line)
                             else:
                                 lines.append(line)
                         elif "}" in line:
@@ -249,7 +254,10 @@ class BaseCreator:
                                     dst.write(line_to_write)
                                     # save materials specified with $SIDE$
                                     if "$SIDE$" in line_to_write:
-                                        side_mats.append(line_to_write.split("$SIDE$")[1].split(".")[0])
+                                        split = line_to_write.split("$SIDE$")
+                                        pre = split[0].split("/")[-1]
+                                        post = split[1].split(".")[0]
+                                        side_mats.append((pre, post))
                             # save the lp materials for this country and vehicle type
                             if country in self.country_lp_types:
                                 self.country_lp_types[country][vehicle_type] = (f_lp_mat, r_lp_mat, side_mats)
@@ -259,7 +267,6 @@ class BaseCreator:
                             templates = []
                             found_vehicle = False
                             found_custom_font = False
-                            wrote_mat = False
                             vehicle_type = None
                             f_lp_mat = "front"
                             r_lp_mat = "rear"
@@ -300,17 +307,14 @@ class BaseCreator:
             self.generate_lp_mats(country, foreign_ratios)
 
     def generate_lp_mats(self, country, foreign_ratios):
+        self.generate_lp_side_mats(country)
         dst_dir = f"{self.material_dst_dir}{country}"
         is_car = self.type == "car"
         if not os.path.exists(dst_dir):
             os.makedirs(dst_dir)
         for entry in (foreign_ratios if is_car else self.country_dict):
             foreign_country = entry[0] if is_car else entry
-            # check if type is available, else use fallback car type
-            if self.type in self.country_lp_types[foreign_country]:
-                f_mat, r_mat, side_mats = self.country_lp_types[foreign_country][self.type]
-            else:
-                f_mat, r_mat, side_mats = self.country_lp_types[foreign_country]["car"]
+            f_mat, r_mat, _ = self.get_lp_mats(foreign_country)
             src_locs = [f"{self.material_src_loc}{foreign_country}/{f_mat}.mat",
                         f"{self.material_src_loc}{foreign_country}/{r_mat}.mat"]
 
@@ -326,16 +330,27 @@ class BaseCreator:
                             if "texture" in line and "_name" not in line:
                                 line = line.replace('\"', f'\"/material/ui/lp/{foreign_country}/', 1)
                             dst.write(line)
-                    # generate materials required for the $SIDE$ parameter
-                    for side_mat in side_mats:
-                        original_prefix = "front" if side == 0 else "rear"
-                        copy_src = self.find_file(
-                            f"{self.material_src_loc}{foreign_country}/{original_prefix}{side_mat}.mat")
-                        copy_dst_folder = f"{self.material_dst_dir}{foreign_country}"
-                        copy_dst = f"{copy_dst_folder}/{plate_name}{side_mat}.mat"
-                        if not os.path.exists(copy_dst_folder):
-                            os.makedirs(copy_dst_folder)
-                        shutil.copy(copy_src, copy_dst)
+
+    def get_lp_mats(self, country):
+        # check if type is available, else use fallback car type
+        if self.type in self.country_lp_types[country]:
+            return self.country_lp_types[country][self.type]
+        return self.country_lp_types[country]["car"]
+
+    def generate_lp_side_mats(self, country):
+        # generate materials required for the $SIDE$ parameter
+        for side in [0, 1]:
+            for pre, post in self.get_lp_mats(country)[2]:
+                post_fix = "" if self.type == "trailer" else ("_f" if side == 0 else "_r")
+                plate_name = f"{self.type}_{self.country_dict[country]}{post_fix}"
+                original_prefix = "front" if side == 0 else "rear"
+                copy_src = self.find_file(
+                    f"{self.material_src_loc}{country}/{pre}{original_prefix}{post}.mat")
+                copy_dst_folder = f"{self.material_dst_dir}{country}"
+                copy_dst = f"{copy_dst_folder}/{pre}{plate_name}{post}.mat"
+                if not os.path.exists(copy_dst_folder):
+                    os.makedirs(copy_dst_folder)
+                shutil.copy(copy_src, copy_dst)
 
     def generate_spawn_info(self, foreign_ratios, national_ratio, traffic_dst_dir):
         for ratio in foreign_ratios:
@@ -393,3 +408,4 @@ class BaseCreator:
             if os.path.exists(file_path):
                 return file_path
         print(f"Could not find file: {args}")
+        return None
