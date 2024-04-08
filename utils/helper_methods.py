@@ -19,6 +19,7 @@ def replace_longest_substring(line, replacements, code):
             longest_replacement = replacement
     if longest_replacement:
         # ignore comments
+        line = line.replace("\t\n", "\n")
         start = "\t" if "\t" in line else ""
         line = f"{start}{line.split('#')[0].strip()}\n"
         prev_char, next_char = get_characters_surrounding_substring(line, longest_replacement)

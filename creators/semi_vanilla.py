@@ -1,4 +1,4 @@
-from base import BaseCreator
+from creators.base import BaseCreator
 
 
 class VanillaTruckCreator(BaseCreator):
@@ -12,8 +12,9 @@ class VanillaTruckCreator(BaseCreator):
         self.set_country_dict()
         # ensure that the spawn configuration is of the correct format
         assert self.check_spawn_ratios(self.configuration.truck_spawn_config)
-        # create license plate definitions
-        self.create_lp_defs(["car", "truck", "trailer"])
+        # create license plate definitions, for non-addons
+        if not self.is_addon:
+            self.create_lp_defs(["car", "truck", "trailer"])
         # get all specified trucks from traffic
         self.set_vehicles_per_country(self.configuration.truck_list)
         # make a truck def for each truck for each country and link with all country trailers via trailer_chains

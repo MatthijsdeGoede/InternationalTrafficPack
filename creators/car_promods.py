@@ -1,4 +1,4 @@
-from base import BaseCreator
+from creators.base import BaseCreator
 
 
 class ProModsCarCreator(BaseCreator):
@@ -12,8 +12,9 @@ class ProModsCarCreator(BaseCreator):
         self.set_country_dict()
         # ensure that the spawn configuration is of the correct format
         assert self.check_spawn_ratios(self.configuration.car_spawn_config)
-        # create license plate definitions
-        self.create_lp_defs(["car"])
+        # create license plate definitions, for non-addons
+        if not self.is_addon:
+            self.create_lp_defs(["car"])
         # get all specified cars from traffic
         self.set_vehicles_per_country(self.configuration.car_list, check_spawn_rates=True)
         # create car definitions for every country and variant
