@@ -1,7 +1,7 @@
 import os
 
 src_folder = "C:\\Users\\Matth\\Desktop\\AI Traffic Pack by Jazzycat"
-dst_folder = "C:\\Users\\Matth\\Desktop\\Jazzycat Matfix"
+dst_folder = "C:\\Users\\Matth\\Desktop\\International Traffic Pack - Improved Jazzycat Materials"
 
 for root, _, files in os.walk(src_folder):
     for file in files:

@@ -10,8 +10,7 @@ mod_folder = "C:\\Users\\Matth\\Desktop\\International Traffic Pack - Add-on for
 base_folder = "D:\\ETS2 Blender\\BaseFolder(1.48)\\"
 pm_folder = "D:\\SVN ProMods\\wip\\"
 jazzy_ai_folder = "C:\\Users\\Matth\\Desktop\\AI Traffic Pack by Jazzycat"
-lp_folder = "C:\\Users\\Matth\\Desktop\\pm lps\\"
-
+lp_folder = "C:\\Users\\Matth\\Desktop\\ProMods License Plate Definitions\\"
 
 def run_vanilla():
     # retrieve the configuration for the vanilla mod
