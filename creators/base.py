@@ -5,11 +5,12 @@ from utils.helper_methods import *
 
 
 class BaseCreator:
-    def __init__(self, type, base_folder, mod_folder):
+    def __init__(self, type, base_folder, mod_folder, rhs_countries):
         self.type = type
         self.base_folder = base_folder
         self.mod_folder = mod_folder
         self.search_folders = [base_folder]
+        self.rhs_countries = rhs_countries
         self.sub_dir = "esm"
         self.post_fix = ""
         self.country_src_loc = "def\\country"
@@ -17,7 +18,7 @@ class BaseCreator:
         self.vehicle_src_loc = "def\\vehicle\\ai"
         self.vehicle_dst_dir = f"{self.mod_folder}def\\vehicle\\ai\\{self.sub_dir}"
         self.material_src_loc = f"material\\ui\\lp\\"
-        self.material_dst_dir = f"{self.mod_folder}\\material\\ui\\lp\\"
+        self.material_dst_dir = f"{self.mod_folder}material\\ui\\lp\\"
 
         self.country_dict = {}
         self.vehicle_country_dict = {}
@@ -102,12 +103,12 @@ class BaseCreator:
                                 if vehicle in self.vehicle_country_dict:
                                     self.vehicle_country_dict[vehicle][self.country_dict[key]] = spawn_ratio
 
-    def create_chassis(self, vehicle, line, country_code, rhs_countries):
+    def create_chassis(self, vehicle, line, country_code):
         # create eu or uk chassis to ensure the steering wheel is always on the right side
         chassis_base = line.split("/")[-1].split(".")[0]
         chassis_path = get_os_path(line.split('\"')[1])
         chassis_src_path = f"{self.base_folder}{chassis_path}"
-        rhs_driver = country_code in rhs_countries
+        rhs_driver = country_code in self.rhs_countries
         chassis_name = f'{chassis_base}_{"gb" if rhs_driver else "eu"}'
         chassis_dst_folder = f'{self.vehicle_dst_dir}\\{vehicle}\\'
         if not os.path.exists(chassis_dst_folder):
@@ -135,7 +136,7 @@ class BaseCreator:
                 dst.writelines(output_lines)
         return chassis_name
 
-    def create_vehicle_traffic_defs(self, trailer_chains={}, rhs_countries=["gb"]):
+    def create_vehicle_traffic_defs(self, trailer_chains={}):
         for vehicle in self.vehicle_country_dict:
             vehicle_src_file = self.find_file(self.vehicle_src_loc, f'{self.variant_dict[vehicle]}.sui')
             with open(vehicle_src_file, "r", encoding="utf-8") as src:
@@ -163,8 +164,7 @@ class BaseCreator:
                                     accessories.add(accessory_name)
                                 if "vehicle_accessory" in input_line and ".chassis" in input_line and not is_trailer:
                                     # create eu or uk chassis to ensure the steering wheel is always on the right side
-                                    chassis_name = self.create_chassis(self.variant_dict[vehicle], data[i + 2],
-                                                                       country_code, rhs_countries)
+                                    chassis_name = self.create_chassis(self.variant_dict[vehicle], data[i + 2], country_code)
                                 if "variant" in input_line or "traffic_vehicle" in input_line or "traffic_trailer" in input_line:
                                     candidate_name = prepare_internal_name(input_line)
                                     is_new = True

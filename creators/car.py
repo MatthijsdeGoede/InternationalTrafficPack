@@ -1,9 +1,9 @@
 from creators.base import BaseCreator
 
 
-class VanillaCarCreator(BaseCreator):
+class CarCreator(BaseCreator):
     def __init__(self, base_folder, mod_folder, configuration):
-        super().__init__("car", base_folder, mod_folder)
+        super().__init__("car", base_folder, mod_folder, configuration.rhs_driver_countries)
         self.configuration = configuration
 
     def create(self):

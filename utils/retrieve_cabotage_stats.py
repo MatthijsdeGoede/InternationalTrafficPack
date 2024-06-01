@@ -1,13 +1,13 @@
 import openpyxl
 
 # Eurostat file, downloaded from: https://ec.europa.eu/eurostat/databrowser/view/road_go_ca_hac/default/table?lang=en
-file_path = '../data/statistics/road_go_ca_hac_spreadsheet.xlsx'
+file_path = "../data/statistics/road_go_ca_hac_spreadsheet.xlsx"
 workbook = openpyxl.load_workbook(file_path)
 country_data = {}
 
 
 def process_sheet(sheet):
-    country_of_interest = sheet['C7'].value.lower()
+    country_of_interest = sheet["C7"].value.lower()
 
     data = []
     for row in sheet.iter_rows(min_row=12, max_row=41, min_col=1, max_col=49):

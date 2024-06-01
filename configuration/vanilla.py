@@ -44,7 +44,6 @@ car_list = [
 
     "tourer",
     "p3008",
-    "talisman",
     "ford_smax",
     "passat_2014",
 
