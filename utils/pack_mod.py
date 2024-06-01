@@ -1,13 +1,13 @@
 import subprocess
 
 # Path to mod folder
-mod_src_folder = r"C:\Users\Matth\Desktop\International Traffic Pack - Vanilla Edition"
+mod_src_folder = r"YOUR_MOD_SRC_FOLDER"
 
 # Mod destination folder
-mod_dst_folder = r"C:\Users\Matth\Documents\Euro Truck Simulator 2\mod"
+mod_dst_folder = r"YOUR_MOD_DST_FOLDER"
 
 # Archive name
-archive_name = r"\International Traffic Pack by Elitesquad Modz - Vanilla Edition [V1.1].scs"
+archive_name = r"\YOUR_MOD_NAME.scs"
 
 # Path to executable
 exe_path = "scs_packer.exe"

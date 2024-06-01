@@ -1,14 +1,14 @@
 # Vanilla folder
-vanilla_dst_folder = "C:\\Users\\Matth\\Desktop\\International Traffic Pack - Vanilla Edition\\"
+vanilla_dst_folder = "YOUR_VANILLA_DST_FOLDER"
 
 # Base folder
-base_folder = "D:\\ETS2 Blender\\BaseFolder(1.50)\\"
+base_folder = "YOUR_EXTRACTED_SCS_FOLDER"
 
 # ProMods folders
-pm_src_folder = "D:\\SVN ProMods\\wip\\"
-pm_lp_src_folder = "C:\\Users\\Matth\\Desktop\\ProMods License Plate Definitions\\"
-pm_dst_folder = "C:\\Users\\Matth\\Desktop\\International Traffic Pack - ProMods Edition\\"
+pm_src_folder = "PRIVATE_FOLDER"
+pm_lp_src_folder = "PRIVATE_FOLDER"
+pm_dst_folder = "PRIVATE_FOLDER"
 
 # Jazzycat folders
-jazzy_ai_src_folder = "C:\\Users\\Matth\\Desktop\\AI Traffic Pack by Jazzycat\\"
-jazzy_ai_dst_folder = "C:\\Users\\Matth\\Desktop\\International Traffic Pack - Add-on for AI Traffic Pack by Jazzycat\\"
+jazzy_ai_src_folder = "YOUR_EXTRACTED_JAZZYCAT_AI_FOLDER"
+jazzy_ai_dst_folder = "YOUR_JAZZYCAT_AI_DST_FOLDER"
