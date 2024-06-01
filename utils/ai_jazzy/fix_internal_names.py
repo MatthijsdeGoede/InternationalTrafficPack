@@ -1,6 +1,6 @@
 import os
 
-folder = "C:\\Users\\Matth\\Desktop\\AI Traffic Pack by Jazzycat\\def\\vehicle\\ai"
+folder = "YOUR_PATH_TO_JAZZYCAT_AI\\def\\vehicle\\ai"
 
 for root, directories, files in os.walk(folder):
     for file in files:

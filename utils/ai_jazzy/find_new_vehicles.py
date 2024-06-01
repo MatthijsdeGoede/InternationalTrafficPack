@@ -1,7 +1,7 @@
 
 from configuration.ai_jazzy import ban_list, car_list
 
-traffic_storage_file = "C:\\Users\\Matth\\Desktop\\AI Traffic Pack by Jazzycat\\def\\vehicle\\traffic_storage_car.jazzycat_ai.sii"
+traffic_storage_file = "YOUR_PATH\\traffic_storage_car.jazzycat_ai.sii"
 
 banned_cars = set(ban_list)
 existing_vehicles = set(car_list)
