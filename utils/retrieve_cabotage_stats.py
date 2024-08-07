@@ -1,7 +1,7 @@
 import openpyxl
 
 # Eurostat file, downloaded from: https://ec.europa.eu/eurostat/databrowser/view/road_go_ca_hac/default/table?lang=en
-file_path = "../data/statistics/road_go_ca_hac_spreadsheet.xlsx"
+file_path = "../data/raw/road_go_ca_hac_spreadsheet.xlsx"
 workbook = openpyxl.load_workbook(file_path)
 country_data = {}
 
