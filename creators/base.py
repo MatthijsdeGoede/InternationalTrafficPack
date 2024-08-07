@@ -323,16 +323,14 @@ class BaseCreator:
                 self.generate_spawn_info(foreign_ratios, national_ratio, traffic_dst_dir)
             # generate license plate material files, for non-addons
             if not self.is_addon:
-                self.generate_lp_mats(country, foreign_ratios)
+                self.generate_lp_mats(country)
 
-    def generate_lp_mats(self, country, foreign_ratios):
+    def generate_lp_mats(self, country):
         self.generate_lp_side_mats(country)
         dst_dir = f"{self.material_dst_dir}{country}"
-        is_car = self.type == "car"
         if not os.path.exists(dst_dir):
             os.makedirs(dst_dir)
-        for entry in (foreign_ratios if is_car else self.country_dict):
-            foreign_country = entry[0] if is_car else entry
+        for foreign_country in self.country_dict:
             f_mat, r_mat, _ = self.get_lp_mats(foreign_country)
             src_locs = [f"{self.material_src_loc}{foreign_country}/{f_mat}.mat",
                         f"{self.material_src_loc}{foreign_country}/{r_mat}.mat"]
