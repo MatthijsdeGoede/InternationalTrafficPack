@@ -339,28 +339,28 @@ class BaseCreator:
         if not os.path.exists(dst_dir):
             os.makedirs(dst_dir)
         for foreign_country in self.country_dict:
-            f_mat, r_mat, _ = self.get_lp_mats(foreign_country)
+            f_mat, r_mat, _, requires_export = self.get_lp_mats(foreign_country)
             src_locs = [f"{self.material_src_loc}{foreign_country}/{f_mat}.mat",
                         f"{self.material_src_loc}{foreign_country}/{r_mat}.mat"]
-
-            for side, src_loc in enumerate(src_locs):
-                src_file = self.find_file(src_loc)
-                with open(src_file, "r", encoding="utf-8") as src:
-                    data = src.readlines()
-                    post_fix = "" if self.type == "trailer" else ("_f" if side == 0 else "_r")
-                    plate_name = f"{self.type}_{self.country_dict[foreign_country]}{post_fix}"
-                    dst_file = f"{dst_dir}\\{plate_name}.mat"
-                    with open(dst_file, "w", encoding="utf-8") as dst:
-                        for line in data:
-                            if "source" in line and "_name" not in line:
-                                line = line.replace('\"', f'\"/material/ui/lp/{foreign_country}/', 1)
-                            dst.write(line)
+            if requires_export:
+                for side, src_loc in enumerate(src_locs):
+                    src_file = self.find_file(src_loc)
+                    with open(src_file, "r", encoding="utf-8") as src:
+                        data = src.readlines()
+                        post_fix = "" if self.type == "trailer" else ("_f" if side == 0 else "_r")
+                        plate_name = f"{self.type}_{self.country_dict[foreign_country]}{post_fix}"
+                        dst_file = f"{dst_dir}\\{plate_name}.mat"
+                        with open(dst_file, "w", encoding="utf-8") as dst:
+                            for line in data:
+                                if "source" in line and "_name" not in line:
+                                    line = line.replace('\"', f'\"/material/ui/lp/{foreign_country}/', 1)
+                                dst.write(line)
 
     def get_lp_mats(self, country):
         # check if type is available, else use fallback car type
         if self.type in self.country_lp_types[country]:
-            return self.country_lp_types[country][self.type]
-        return self.country_lp_types[country]["car"]
+            return self.country_lp_types[country][self.type] + (True,)
+        return self.country_lp_types[country]["car"] + (False,)
 
     def generate_lp_side_mats(self, country):
         # generate materials required for the $SIDE$ parameter

@@ -2,27 +2,33 @@ from configuration.ai_jazzy import AiJazzyVanillaConfiguration
 from configuration.folders import *
 from configuration.promods import ProModsConfiguration
 from configuration.vanilla import VanillaConfiguration
+from creators.bus import BusCreator
+from creators.camper import CamperCreator
 from creators.car import CarCreator, CarHookCreator
 from creators.caravan import CaravanCreator
 from creators.semi import TrailerCreator, TruckCreator
+from creators.van import VanCreator
 
 
 def run_vanilla():
     # retrieve the configuration for the vanilla mod
     configuration = VanillaConfiguration()
-    # create car traffic
-    car_creator = CarCreator(base_folder, vanilla_dst_folder, configuration)
-    car_creator.create()
-    # create semi traffic
+    # create cars
+    CarCreator(base_folder, vanilla_dst_folder, configuration).create()
+    # create semis
     trailer_creator = TrailerCreator(base_folder, vanilla_dst_folder, configuration)
     trailer_creator.create()
-    truck_creator = TruckCreator(base_folder, vanilla_dst_folder, trailer_creator.vehicle_country_dict, configuration)
-    truck_creator.create()
-    # create cars with hooks and caravans
+    TruckCreator(base_folder, vanilla_dst_folder, trailer_creator.vehicle_country_dict, configuration).create()
+    # create cars with caravans
     caravan_creator = CaravanCreator(base_folder, vanilla_dst_folder, configuration)
     caravan_creator.create()
-    car_hook_creator = CarHookCreator(base_folder, vanilla_dst_folder, configuration, caravan_creator.vehicle_country_dict)
-    car_hook_creator.create()
+    CarHookCreator(base_folder, vanilla_dst_folder, configuration, caravan_creator.vehicle_country_dict).create()
+    # create campers
+    CamperCreator(base_folder, vanilla_dst_folder, configuration).create()
+    # create vans
+    VanCreator(base_folder, vanilla_dst_folder, configuration).create()
+    # create busses
+    BusCreator(base_folder, vanilla_dst_folder, configuration).create()
 
 
 def run_pro_mods():
