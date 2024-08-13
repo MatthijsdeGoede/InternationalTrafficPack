@@ -2,11 +2,58 @@ class VanillaConfiguration:
     def __init__(self):
         self.car_list = car_list
         self.car_spawn_config = car_spawn_config
+        self.van_list = van_list
+        self.bus_list = bus_list
+        self.car_hook_list = car_hook_list
+        self.caravan_list = caravan_list
+        self.caravan_spawn_config = caravan_spawn_config
+        self.camper_list = camper_list
         self.truck_list = truck_list
         self.trailer_list = trailer_list
         self.truck_spawn_config = truck_spawn_config
         self.rhs_driver_countries = rhs_driver_countries
 
+
+van_list = [
+    "ford_transit",
+    "transit_2016",
+    "transporter_t6",
+    "ducato_van",
+    "crafter_van",
+]
+
+bus_list = [
+    "opalin",
+    "tourliner",
+]
+
+car_hook_list = [
+    "ford_smax",
+    "passat_2014",
+    "range_rover",
+    "skoda_octavia_iii",
+    "superb_iii",
+    "transporter_t6",
+    "vw_touran",
+    "xc90",
+]
+
+caravan_list = [
+    "caravan_ontour"
+]
+
+caravan_spawn_config = {
+    "netherlands": {
+        "national": 0.80,
+        "international": [("germany", 0.07), ("belgium", 0.05), ("poland", 0.04), ("france", 0.02), ("uk", 0.02)],
+        "random": 0.0,
+    },
+}
+
+camper_list = [
+    "hymer",
+    "larus_caravan_midclass_23",
+]
 
 car_list = [
     "a3",

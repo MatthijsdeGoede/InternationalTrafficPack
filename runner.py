@@ -2,7 +2,8 @@ from configuration.ai_jazzy import AiJazzyVanillaConfiguration
 from configuration.folders import *
 from configuration.promods import ProModsConfiguration
 from configuration.vanilla import VanillaConfiguration
-from creators.car import CarCreator
+from creators.car import CarCreator, CarHookCreator
+from creators.caravan import CaravanCreator
 from creators.semi import TrailerCreator, TruckCreator
 
 
@@ -17,6 +18,11 @@ def run_vanilla():
     trailer_creator.create()
     truck_creator = TruckCreator(base_folder, vanilla_dst_folder, trailer_creator.vehicle_country_dict, configuration)
     truck_creator.create()
+    # create cars with hooks and caravans
+    caravan_creator = CaravanCreator(base_folder, vanilla_dst_folder, configuration)
+    caravan_creator.create()
+    car_hook_creator = CarHookCreator(base_folder, vanilla_dst_folder, configuration, caravan_creator.vehicle_country_dict)
+    car_hook_creator.create()
 
 
 def run_pro_mods():
@@ -49,3 +55,7 @@ def run_ai_jazzy_vanilla():
 # run_ai_jazzy_vanilla()
 run_vanilla()
 # run_pro_mods()
+
+# TODO: configure caravan and camper spawn rates (vanilla)
+# TODO: configure bus spawn rates (vanilla)
+# TODO: configure van spawn rates (vanilla)

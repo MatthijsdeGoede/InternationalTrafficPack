@@ -5,6 +5,7 @@ class TruckCreator(BaseCreator):
     def __init__(self, base_folder, mod_folder, trailer_chains, configuration):
         super().__init__("truck", base_folder, mod_folder, configuration.rhs_driver_countries)
         self.configuration = configuration
+        self.traffic_storage = "truck"
         self.trailer_chains = trailer_chains
 
     def create(self):
@@ -29,6 +30,7 @@ class TrailerCreator(BaseCreator):
     def __init__(self, base_folder, mod_folder, configuration):
         super().__init__("trailer", base_folder, mod_folder, configuration.rhs_driver_countries)
         self.configuration = configuration
+        self.traffic_storage = "trailer_truck"
         self.vehicle_src_loc = f"def\\vehicle\\trailer"
         self.vehicle_dst_dir = f"{mod_folder}def\\vehicle\\trailer\\{self.sub_dir}"
 

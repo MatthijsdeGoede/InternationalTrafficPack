@@ -1,6 +1,7 @@
 import itertools
 import os
 import shutil
+import random
 from utils.helper_methods import *
 
 
@@ -13,6 +14,7 @@ class BaseCreator:
         self.rhs_countries = rhs_countries
         self.sub_dir = "esm"
         self.post_fix = ""
+        self.traffic_storage = "car"
         self.country_src_loc = "def\\country"
         self.country_dst_dir = f"{self.mod_folder}def\\country\\"
         self.vehicle_src_loc = "def\\vehicle\\ai"
@@ -32,13 +34,13 @@ class BaseCreator:
 
     def create_traffic_storage_file(self, vehicle_list):
         storage_dir = f"{self.mod_folder}def\\vehicle"
-        storage_dst_file = f"{storage_dir}\\traffic_storage_{'trailer_truck' if self.type == 'trailer' else self.type}.esm{self.post_fix}.sii"
+        storage_dst_file = f"{storage_dir}\\traffic_storage_{self.traffic_storage}.esm{self.post_fix}.sii"
         with open(storage_dst_file, "w") as dst:
             dst.write("SiiNunit\n{\n")
             for vehicle in vehicle_list:
                 vehicle_name = vehicle.replace("\\", "/")
                 dst.write(
-                    f"@include \"{'trailer' if self.type == 'trailer' else 'ai'}/{self.sub_dir}/{vehicle_name}.sui\"\n")
+                    f"@include \"{'trailer' if self.traffic_storage == 'trailer' else 'ai'}/{self.sub_dir}/{vehicle_name}.sui\"\n")
             dst.write("}")
 
     def set_country_dict(self):
@@ -60,15 +62,16 @@ class BaseCreator:
                                     self.country_dict[country_name] = abbreviation
                                 break
 
-    def set_vehicles_per_country(self, vehicle_list, check_spawn_rates=False, first_variant_only=True, limited_to=None):
+    def set_vehicles_per_country(self, vehicle_list, check_spawn_rates=False, first_variant_only=True, hook=False, limited_to=None):
         # retrieve the variants that belong to the selected vehicles
         for vehicle in vehicle_list:
             vehicle_src_file = self.find_file(self.vehicle_src_loc, f'{vehicle}.sui')
             with open(vehicle_src_file, "r", encoding="utf-8") as src:
                 variant_name = None
                 rate = 1.00
+                finding_spawn_rate = False
                 for input_line in src:
-                    if "traffic_vehicle" in input_line or "traffic_trailer" in input_line:
+                    if ("traffic_vehicle" in input_line and (not hook or (hook and ".hook" in input_line))) or "traffic_trailer" in input_line:
                         finding_spawn_rate = True
                         variant_name = prepare_internal_name(input_line)
                     elif "spawn_ratio" in input_line:
@@ -136,6 +139,13 @@ class BaseCreator:
                 dst.writelines(output_lines)
         return chassis_name
 
+    def is_allowed_to_park(self, trailer_chains):
+        if self.type == "truck":
+            return True
+        elif len(trailer_chains) > 0:
+            return False
+        return "true" if (random.random() < 0.10) else "false"
+
     def create_vehicle_traffic_defs(self, trailer_chains={}):
         for vehicle in self.vehicle_country_dict:
             vehicle_src_file = self.find_file(self.vehicle_src_loc, f'{self.variant_dict[vehicle]}.sui')
@@ -143,7 +153,8 @@ class BaseCreator:
                 variants = set()
                 accessories = set()
                 data = src.readlines()
-                vehicle_dst_file = os.path.join(self.vehicle_dst_dir, f'{self.variant_dict[vehicle]}.sui')
+                vehicle_dst_file = os.path.join(self.vehicle_dst_dir,
+                                                f'{self.variant_dict[vehicle]}.sui')
                 folder_name = os.path.dirname(vehicle_dst_file)
                 if not os.path.exists(folder_name):
                     os.makedirs(folder_name)
@@ -155,7 +166,6 @@ class BaseCreator:
                         if self.vehicle_country_dict[vehicle][country_code] > 0:
                             cnt += 1
                             chassis_name = None
-                            is_truck = self.type == "truck"
                             is_trailer = self.type == "trailer"
                             for i, input_line in enumerate(data):
                                 # gather original accessory and vehicle variant names
@@ -164,7 +174,8 @@ class BaseCreator:
                                     accessories.add(accessory_name)
                                 if "vehicle_accessory" in input_line and ".chassis" in input_line and not is_trailer:
                                     # create eu or uk chassis to ensure the steering wheel is always on the right side
-                                    chassis_name = self.create_chassis(self.variant_dict[vehicle], data[i + 2], country_code)
+                                    chassis_name = self.create_chassis(self.variant_dict[vehicle], data[i + 2],
+                                                                       country_code)
                                 if "variant" in input_line or "traffic_vehicle" in input_line or "traffic_trailer" in input_line:
                                     candidate_name = prepare_internal_name(input_line)
                                     is_new = True
@@ -175,8 +186,7 @@ class BaseCreator:
                                     if is_new:
                                         variants.add(candidate_name)
                                 # create unique internal names for the accessories and variants based on the country_code
-                                output_line = replace_longest_substring(input_line, variants | accessories,
-                                                                        country_code)
+                                output_line = replace_longest_substring(input_line, variants | accessories, country_code)
                                 if "traffic_trailer" in output_line:
                                     trailer_name = prepare_internal_name(output_line)
                                     dst.write(f"traffic_trailer : traffic.trailer.{trailer_name}\n")
@@ -185,20 +195,18 @@ class BaseCreator:
                                     dst.write(f"	variant[]: traffic.trailer.{variant_name}\n")
                                 elif "@include \"drivers" in input_line:
                                     # set spawn ratio, parking settings and license plate type for non trailer types
+                                    allow_parked = self.is_allowed_to_park(trailer_chains)
                                     dst.write(
-                                        f"\tspawn_ratio: 0\n\tallow_parked: true\n\tlicense_plate_type: {self.type}_{country_code}\n\n")
+                                        f"\tspawn_ratio: 0\n\tallow_parked: {allow_parked}\n\tlicense_plate_type: {self.type}_{country_code}\n\n")
                                     parts = vehicle_src_file.split("\\")
                                     driver_path = "/".join(parts[parts.index("def"):-1])
                                     dst.write(f"@include \"/{driver_path}/drivers{input_line.split('drivers')[1]}\n")
                                 elif "trailer_chains[]:" in input_line:
-                                    if is_truck:
-                                        # match the truck with trailers of the corresponding country
-                                        for trailer in trailer_chains.items():
-                                            if trailer[1][country_code] > 0:
-                                                dst.write(
-                                                    f"\ttrailer_chains[]: \"traffic.trailer.{trailer[0]}.{country_code}\"\n")
-                                    else: # ignore trailer chains for non-truck types for now
-                                        continue
+                                    # match the vehicle with trailers of the corresponding country
+                                    for trailer in trailer_chains.items():
+                                        if trailer[1][country_code] > 0:
+                                            dst.write(
+                                                f"\ttrailer_chains[]: \"traffic.trailer.{trailer[0]}.{country_code}\"\n")
                                 elif is_trailer and "cargo_mass:" in input_line:
                                     # set custom license plate type for trailer type
                                     dst.write(f"\tlicense_plate_type: {self.type}_{country_code}\n\n")
@@ -344,7 +352,7 @@ class BaseCreator:
                     dst_file = f"{dst_dir}\\{plate_name}.mat"
                     with open(dst_file, "w", encoding="utf-8") as dst:
                         for line in data:
-                            if "texture" in line and "_name" not in line:
+                            if "source" in line and "_name" not in line:
                                 line = line.replace('\"', f'\"/material/ui/lp/{foreign_country}/', 1)
                             dst.write(line)
 
@@ -375,15 +383,20 @@ class BaseCreator:
             # filter out the vehicles that should spawn in the foreign country and calculate the rates for this country
             foreign_vehicles = [(vehicle[0], 1 * float(ratio[1]) / national_ratio * vehicle[1]) for vehicle in
                                 self.get_vehicles_for_country(foreign_abs) if vehicle[1] > 0]
-            # generate a foreign traffic definition for this country
-            traffic_dst_file = os.path.join(traffic_dst_dir, f"traffic.{self.type}_{foreign_abs}{self.post_fix}.sii")
-            with open(traffic_dst_file, "w", encoding="utf-8") as dst:
-                dst.write("SiiNunit\n{\n")
-                for foreign_vehicle in foreign_vehicles:
-                    dst.write(f"country_traffic_info : .country.info.traffic.{foreign_vehicle[0]}.{foreign_abs} {{\n\t"
-                              f"object: traffic.{foreign_vehicle[0]}.{foreign_abs}\n\tspawn_ratio: "
-                              f"{str(round(foreign_vehicle[1], 3))}\n}}\n\n")
-                dst.write("}")
+            # remove vehicles with 0 spawn rate and only export for countries with non-0 entries
+            foreign_vehicles = [vehicle for vehicle in foreign_vehicles if round(vehicle[1], 3) > 0]
+            if len(foreign_vehicles) > 0:
+                # generate a foreign traffic definition for this country
+                traffic_dst_file = os.path.join(traffic_dst_dir, f"traffic.{self.type}_{foreign_abs}{self.post_fix}.sii")
+                with open(traffic_dst_file, "w", encoding="utf-8") as dst:
+                    dst.write("SiiNunit\n{\n")
+                    for foreign_vehicle in foreign_vehicles:
+                        vehicle_name = foreign_vehicle[0].split(".hook")[0]
+                        postfix = ".hook" if ".hook" in foreign_vehicle[0] else ""
+                        dst.write(f"country_traffic_info : .country.info.traffic.{vehicle_name}.{foreign_abs}{postfix} {{\n\t"
+                                  f"object: traffic.{vehicle_name}.{foreign_abs}{postfix}\n\tspawn_ratio: "
+                                  f"{str(round(foreign_vehicle[1], 3))}\n}}\n\n")
+                    dst.write("}")
 
     def generate_lp_data(self, foreign_ratios, traffic_dst_dir):
         lp_dst_file = os.path.join(traffic_dst_dir, f"license_plates.{self.type}_esm.sii")
