@@ -40,3 +40,25 @@ def prepare_internal_name(input_line, is_accessory=False):
     accessory = accessory.replace("traffic.", "")
     accessory = accessory.replace("trailer.", "")
     return accessory
+
+
+def check_spawn_ratios(spawn_config, country_dict):
+    supported_countries = set(country_dict.keys())
+    for country in spawn_config:
+        foreign_countries = set()
+        ratios = 0
+        for ratio in spawn_config[country]["international"]:
+            foreign_country = ratio[0]
+            ratios += ratio[1]
+            if foreign_country in foreign_countries:
+                print(f"Country {foreign_country} appears more than once in spawn configuration for {country}")
+                return False
+            elif foreign_country not in supported_countries:
+                print(f"Unsupported country {foreign_country} in spawn configuration for {country}")
+                return False
+            foreign_countries.add(foreign_country)
+        ratio_sum = round(ratios + spawn_config[country]["national"] + spawn_config[country]["random"], 5)
+        if ratio_sum != 1.0:
+            print(f"Ratios in spawn configuration for {country} sum to {ratio_sum}")
+            return False
+    return True

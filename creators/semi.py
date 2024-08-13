@@ -1,4 +1,5 @@
 from creators.base import BaseCreator
+from utils.helper_methods import check_spawn_ratios
 
 
 class TruckCreator(BaseCreator):
@@ -12,7 +13,7 @@ class TruckCreator(BaseCreator):
         # get all countries and their abbreviations
         self.set_country_dict()
         # ensure that the spawn configuration is of the correct format
-        assert self.check_spawn_ratios(self.configuration.truck_spawn_config)
+        assert check_spawn_ratios(self.configuration.truck_spawn_config, self.country_dict)
         # create license plate definitions, for non-addons
         if not self.is_addon:
             self.create_lp_defs(["car", "truck", "trailer"])

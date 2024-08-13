@@ -61,7 +61,3 @@ def run_ai_jazzy_vanilla():
 # run_ai_jazzy_vanilla()
 run_vanilla()
 # run_pro_mods()
-
-# TODO: configure caravan and camper spawn rates (vanilla)
-# TODO: configure bus spawn rates (vanilla)
-# TODO: configure van spawn rates (vanilla)

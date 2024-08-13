@@ -144,7 +144,7 @@ class BaseCreator:
             return True
         elif len(trailer_chains) > 0:
             return False
-        return "true" if (random.random() < 0.10) else "false"
+        return "true" if (random.random() < 0.05) else "false"
 
     def create_vehicle_traffic_defs(self, trailer_chains={}):
         for vehicle in self.vehicle_country_dict:
@@ -410,27 +410,6 @@ class BaseCreator:
                 dst.write(
                     f"license_plate_data : .lp.{self.type}_{foreign_abs}\n{{\n\ttype: {self.type}_{foreign_abs}\n@include \"/def/country/{foreign_country}/lp_{lp_ref}_{foreign_abs}.sui\"\n}}\n\n")
             dst.write("}")
-
-    def check_spawn_ratios(self, spawn_config):
-        supported_countries = set(self.country_dict.keys())
-        for country in spawn_config:
-            foreign_countries = set()
-            ratios = 0
-            for ratio in spawn_config[country]["international"]:
-                foreign_country = ratio[0]
-                ratios += ratio[1]
-                if foreign_country in foreign_countries:
-                    print(f"Country {foreign_country} appears more than once in spawn configuration for {country}")
-                    return False
-                elif foreign_country not in supported_countries:
-                    print(f"Unsupported country {foreign_country} in spawn configuration for {country}")
-                    return False
-                foreign_countries.add(foreign_country)
-            ratio_sum = round(ratios + spawn_config[country]["national"] + spawn_config[country]["random"], 5)
-            if ratio_sum != 1.0:
-                print(f"Ratios in spawn configuration for {country} sum to {ratio_sum}")
-                return False
-        return True
 
     def find_file(self, *args):
         for folder_path in self.search_folders:

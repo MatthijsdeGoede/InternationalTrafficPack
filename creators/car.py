@@ -1,4 +1,5 @@
 from creators.base import BaseCreator
+from utils.helper_methods import check_spawn_ratios
 
 
 class CarCreator(BaseCreator):
@@ -17,7 +18,7 @@ class CarCreator(BaseCreator):
         # set all countries and their abbreviations
         self.set_country_dict()
         # ensure that the spawn configuration is of the correct format
-        assert self.check_spawn_ratios(self.get_spawn_config())
+        assert check_spawn_ratios(self.get_spawn_config(), self.country_dict)
         # create license plate definitions, for non-addons
         if not self.is_addon:
             self.create_lp_defs(self.lp_types)
@@ -47,7 +48,7 @@ class CarHookCreator(CarCreator):
         # set all countries and their abbreviations
         self.set_country_dict()
         # ensure that the spawn configuration is of the correct format
-        assert self.check_spawn_ratios(self.get_spawn_config())
+        assert check_spawn_ratios(self.get_spawn_config(), self.country_dict)
         # create license plate definitions, for non-addons
         if not self.is_addon:
             self.create_lp_defs(["car"])
