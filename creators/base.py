@@ -40,7 +40,7 @@ class BaseCreator:
             for vehicle in vehicle_list:
                 vehicle_name = vehicle.replace("\\", "/")
                 dst.write(
-                    f"@include \"{'trailer' if self.traffic_storage == 'trailer' else 'ai'}/{self.sub_dir}/{vehicle_name}.sui\"\n")
+                    f"@include \"{'trailer' if self.traffic_storage == 'trailer_truck' else 'ai'}/{self.sub_dir}/{vehicle_name}.sui\"\n")
             dst.write("}")
 
     def set_country_dict(self):
@@ -141,10 +141,10 @@ class BaseCreator:
 
     def is_allowed_to_park(self, trailer_chains):
         if self.type == "truck":
-            return True
+            return "true"
         elif len(trailer_chains) > 0:
-            return False
-        return "true" if (random.random() < 0.05) else "false"
+            return "false"
+        return "true" if (random.random() < 0.02) else "false"
 
     def create_vehicle_traffic_defs(self, trailer_chains={}):
         for vehicle in self.vehicle_country_dict:
@@ -206,7 +206,7 @@ class BaseCreator:
                                     for trailer in trailer_chains.items():
                                         if trailer[1][country_code] > 0:
                                             dst.write(
-                                                f"\ttrailer_chains[]: \"traffic.trailer.{trailer[0]}.{country_code}\"\n")
+                                                f"\ttrailer_chains[]: \"traffic.trailer.{trailer[0]}.esm.{country_code}\"\n")
                                 elif is_trailer and "cargo_mass:" in input_line:
                                     # set custom license plate type for trailer type
                                     dst.write(f"\tlicense_plate_type: {self.type}_{country_code}\n\n")
@@ -393,8 +393,8 @@ class BaseCreator:
                     for foreign_vehicle in foreign_vehicles:
                         vehicle_name = foreign_vehicle[0].split(".hook")[0]
                         postfix = ".hook" if ".hook" in foreign_vehicle[0] else ""
-                        dst.write(f"country_traffic_info : .country.info.traffic.{vehicle_name}.{foreign_abs}{postfix} {{\n\t"
-                                  f"object: traffic.{vehicle_name}.{foreign_abs}{postfix}\n\tspawn_ratio: "
+                        dst.write(f"country_traffic_info : .country.info.traffic.{vehicle_name}.esm.{foreign_abs}{postfix} {{\n\t"
+                                  f"object: traffic.{vehicle_name}.esm.{foreign_abs}{postfix}\n\tspawn_ratio: "
                                   f"{str(round(foreign_vehicle[1], 3))}\n}}\n\n")
                     dst.write("}")
 

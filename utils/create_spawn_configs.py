@@ -144,15 +144,15 @@ def create_van_spawn_config(car_spawn_config, truck_spawn_config):
 
 def create_bus_spawn_config(country_dict):
     bus_spawn_config = {}
-    # 60% national
-    # 35% taken from distance weighted 10 nearest countries
+    # 70% national
+    # 25% taken from distance weighted 10 nearest countries
     # 5% random
     for country in country_dict.keys():
         spawn_config = bus_spawn_config[country] = {}
-        spawn_config["national"] = 0.60
+        spawn_config["national"] = 0.70
         spawn_config["random"] = 0.05
         spawn_config["international"] = []
-        neighbour_shares = calculate_shares(get_nearest_neighbours(country_dict.keys(), country), 0.35)
+        neighbour_shares = calculate_shares(get_nearest_neighbours(country_dict.keys(), country), 0.25)
         spawn_sum = 0
         for entry in neighbour_shares:
             spawn_config["international"].append(entry)
@@ -164,8 +164,8 @@ def create_bus_spawn_config(country_dict):
 def create_camper_caravan_spawn_config(car_spawn_config, sales_list):
     res_spawn_config = {}
     # 40% national
-    # 35% taken from top 15 countries, weighted by (60% of total sales, 40% distance)
-    # 20% taken from car configs
+    # 40% taken from top 15 countries, weighted by (60% of total sales, 40% distance)
+    # 15% taken from car configs
     # 5% random
     for country in car_spawn_config.keys():
         spawn_config = res_spawn_config[country] = {}
@@ -174,8 +174,8 @@ def create_camper_caravan_spawn_config(car_spawn_config, sales_list):
         spawn_config["international"] = []
         filtered_sales = [entry for entry in sales_list if entry[0] != country]
         camper_sales_countries = [entry[0] for entry in filtered_sales]
-        sale_shares = dict(calculate_shares(filtered_sales, 0.35))
-        distance_shares = dict(calculate_shares(get_nearest_neighbours(camper_sales_countries, country, 15), 0.35))
+        sale_shares = dict(calculate_shares(filtered_sales, 0.40))
+        distance_shares = dict(calculate_shares(get_nearest_neighbours(camper_sales_countries, country, 15), 0.40))
 
         spawn_sum = 0
         whitelist = []
@@ -188,7 +188,7 @@ def create_camper_caravan_spawn_config(car_spawn_config, sales_list):
                 whitelist.append(foreign_country)
 
         # only consider car_config countries that have not yet been included in camper_sales, or had 0 spawn rate
-        car_config_shares = calculate_shares([entry for entry in car_spawn_config[country]["international"] if entry[0] not in camper_sales_countries or entry[0] in whitelist], 0.20)
+        car_config_shares = calculate_shares([entry for entry in car_spawn_config[country]["international"] if entry[0] not in camper_sales_countries or entry[0] in whitelist], 0.15)
         for entry in car_config_shares:
             spawn_config["international"].append(entry)
             spawn_sum += entry[1]

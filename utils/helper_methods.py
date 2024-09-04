@@ -11,7 +11,7 @@ def get_characters_surrounding_substring(input_string, substring):
     return ancestor, successor
 
 
-def replace_longest_substring(line, replacements, code):
+def replace_longest_substring(line, replacements, code, signature="esm"):
     longest_replacement = ""
     for replacement in replacements:
         # find the longest matching substring
@@ -26,10 +26,10 @@ def replace_longest_substring(line, replacements, code):
         # only replace internal names containing a .
         if next_char == "\n" or next_char == "." and prev_char == ".":
             # put country code after occurrence
-            line = line.replace(longest_replacement, f"{longest_replacement}.{code}")
+            line = line.replace(longest_replacement, f"{longest_replacement}.{signature}.{code}")
         elif prev_char == ".":
             # put country code at the end of the internal name
-            line = line.replace("\n", f".{code}\n")
+            line = line.replace("\n", f".{signature}.{code}\n")
     return line
 
 
