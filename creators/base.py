@@ -51,16 +51,17 @@ class BaseCreator:
                 f = os.path.join(country_src_dir, filename)
                 if os.path.isfile(f):
                     country_name = filename.split(".")[0]
-                    with open(f, encoding="utf8") as opened:
-                        for line in opened:
-                            if "country_code:" in line:
-                                abbreviation = line.split("\"")[1].lower()
-                                if country_name not in self.country_dict and country_name != "monaco":
-                                    if abbreviation in abbreviations:
-                                        abbreviation += "_"
-                                    abbreviations.add(abbreviation)
-                                    self.country_dict[country_name] = abbreviation
-                                break
+                    if country_name != "x_land":
+                        with open(f, encoding="utf8") as opened:
+                            for line in opened:
+                                if "country_code:" in line:
+                                    abbreviation = line.split("\"")[1].lower()
+                                    if country_name not in self.country_dict:
+                                        if abbreviation in abbreviations:
+                                            abbreviation += "_"
+                                        abbreviations.add(abbreviation)
+                                        self.country_dict[country_name] = abbreviation
+                                    break
 
     def set_vehicles_per_country(self, vehicle_list, check_spawn_rates=False, first_variant_only=True, hook=False, limited_to=None):
         # retrieve the variants that belong to the selected vehicles
@@ -307,7 +308,7 @@ class BaseCreator:
             vehicles.append((key, country_dict[country_code]))
         return vehicles
 
-    def create_country_data(self, spawn_config):
+    def create_country_data(self, spawn_config, excluded):
         for country in spawn_config:
             traffic_dst_dir = f"{self.country_dst_dir}{country}"
             if not os.path.exists(traffic_dst_dir):
@@ -318,7 +319,7 @@ class BaseCreator:
 
             # retrieve random countries, and calculate spawn ratios
             random_countries = [c for c in self.country_dict.keys() if
-                                c not in map(lambda x: x[0], foreign_ratios) and c != country]
+                                c not in map(lambda x: x[0], foreign_ratios) and c != country and c not in excluded]
             random_ratio = max(0.001, spawn_config[country]["random"] / len(random_countries))
             for random_country in random_countries:
                 foreign_ratios.append((random_country, random_ratio))

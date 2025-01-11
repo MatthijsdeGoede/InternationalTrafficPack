@@ -27,7 +27,7 @@ class CarCreator(BaseCreator):
         # create car definitions for every country and variant
         self.create_vehicle_traffic_defs()
         # create all other country related files
-        self.create_country_data(self.get_spawn_config())
+        self.create_country_data(self.get_spawn_config(), self.configuration.excluded_countries)
         # create a traffic storage file for the cars
         self.create_traffic_storage_file(self.get_vehicle_list())
 
@@ -55,6 +55,6 @@ class CarHookCreator(CarCreator):
         # get all specified cars from traffic
         self.set_vehicles_per_country(self.get_vehicle_list(), check_spawn_rates=True, hook=True)
         # create all other country related files
-        self.create_country_data(self.get_spawn_config())
+        self.create_country_data(self.get_spawn_config(), self.configuration.excluded_countries)
         # create car definitions for every country and variant
         self.create_vehicle_traffic_defs(trailer_chains=self.trailer_chains)

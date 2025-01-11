@@ -10,7 +10,6 @@ from configuration.vanilla import VanillaConfiguration
 # cyprus (cy)
 # faroe (fo)
 # georgia (ge)
-# greece (gr)
 # greenland (gl)
 # guernsey (gbg)
 # iceland (is)
@@ -25,13 +24,34 @@ from configuration.vanilla import VanillaConfiguration
 # svalbard (sj)
 # ukraine (ua)
 
+# TODO: configure these countries and check excluded countries
+# gibraltar (GBZ)
+# azerbaijan (az)
+# monaco (mc)
+
 class ProModsConfiguration(VanillaConfiguration):
     def __init__(self):
         super().__init__()
+        self.excluded_countries = excluded_countries
         self.car_spawn_config = car_spawn_config
         self.truck_spawn_config = truck_spawn_config
         self.rhs_driver_countries = rhs_driver_countries
 
+
+excluded_countries = [
+    "russia",
+    "x_land",
+    "aland",
+    "faroe",
+    "greenland",
+    "guernsey"
+    "iom",
+    "jersey",
+    "nireland",
+    "sanmarino",
+    "svalbard",
+    "gibraltar",
+]
 
 car_spawn_config = {
     "netherlands": {
@@ -239,6 +259,12 @@ car_spawn_config = {
                           ("bosnia", 0.02), ("germany", 0.01)],
         "random": 0.01,
     },
+    "greece": {
+        "national": 0.79,
+        "international": [("turkey", 0.04), ("cyprus", 0.02), ("bulgaria", 0.03), ("italy", 0.03), ("albania", 0.04),
+                          ("macedonia", 0.04)],
+        "random": 0.01
+    },
 
     # PM countries
 
@@ -276,12 +302,6 @@ car_spawn_config = {
     "georgia": {
         "national": 0.80,
         "international": [("turkey", 0.08), ("armenia", 0.06), ("russia", 0.05)],
-        "random": 0.01
-    },
-    "greece": {
-        "national": 0.79,
-        "international": [("turkey", 0.04), ("cyprus", 0.02), ("bulgaria", 0.03), ("italy", 0.03), ("albania", 0.04),
-                          ("macedonia", 0.04)],
         "random": 0.01
     },
     "greenland": {
@@ -423,8 +443,8 @@ truck_spawn_config = {
     },
     "bulgaria": {
         "national": 0.60,
-        "international": [("turkey", 0.10), ("romania", 0.08), ("hungary", 0.04), ("serbia", 0.03), ("poland", 0.03),
-                          ("macedonia", 0.02)],
+        "international": [("turkey", 0.10), ("romania", 0.07), ("hungary", 0.03), ("serbia", 0.03), ("poland", 0.03),
+                          ("macedonia", 0.015), ("greece", 0.025)],
         "random": 0.10,
     },
     "poland": {
@@ -510,10 +530,9 @@ truck_spawn_config = {
     },
     "italy": {
         "national": 0.60,
-        "international": [("poland", 0.06), ("romania", 0.035), ("france", 0.035), ("lithuania", 0.03),
-                          ("germany", 0.03),
-                          ("slovenia", 0.025), ("austria", 0.025), ("bulgaria", 0.03), ("slovakia", 0.02),
-                          ("switzerland", 0.01), ("sanmarino", 0.01)],
+        "international": [("poland", 0.06), ("romania", 0.035), ("france", 0.030), ("lithuania", 0.025),
+                          ("germany", 0.03), ("slovenia", 0.025), ("austria", 0.020), ("bulgaria", 0.025),
+                          ("slovakia", 0.02), ("greece", 0.02), ("switzerland", 0.01), ("sanmarino", 0.01)],
         "random": 0.09,
     },
     "slovakia": {
@@ -523,8 +542,8 @@ truck_spawn_config = {
     },
     "albania": {
         "national": 0.79,
-        "international": [("montenegro", 0.04), ("kosovo", 0.04), ("macedonia", 0.05), ("italy", 0.03),
-                          ("serbia", 0.03), ("germany", 0.01)],
+        "international": [("montenegro", 0.04), ("kosovo", 0.04), ("macedonia", 0.04), ("italy", 0.025),
+                          ("serbia", 0.025), ("germany", 0.01), ("greece", 0.02)],
         "random": 0.01,
     },
     "bosnia": {
@@ -547,7 +566,8 @@ truck_spawn_config = {
     },
     "macedonia": {
         "national": 0.79,
-        "international": [("turkey", 0.06), ("kosovo", 0.03), ("bulgaria", 0.03), ("serbia", 0.04), ("albania", 0.04)],
+        "international": [("turkey", 0.055), ("kosovo", 0.025), ("bulgaria", 0.03), ("serbia", 0.04), ("albania", 0.035),
+                          ("greece", 0.015)],
         "random": 0.01,
     },
     "montenegro": {
@@ -569,6 +589,12 @@ truck_spawn_config = {
                           ("italy", 0.02), ("austria", 0.02), ("slovenia", 0.01), ("croatia", 0.01), ("serbia", 0.01),
                           ("bulgaria", 0.01), ("macedonia", 0.01), ("bosnia", 0.01)],
         "random": 0.05,
+    },
+    "greece": {
+        "national": 0.60,
+        "international": [("turkey", 0.08), ("cyprus", 0.02), ("bulgaria", 0.09), ("italy", 0.03), ("albania", 0.04),
+                          ("macedonia", 0.04)],
+        "random": 0.10
     },
 
     # PM countries
@@ -608,12 +634,6 @@ truck_spawn_config = {
         "national": 0.70,
         "international": [("turkey", 0.15), ("armenia", 0.08), ("russia", 0.06)],
         "random": 0.01
-    },
-    "greece": {
-        "national": 0.60,
-        "international": [("turkey", 0.08), ("cyprus", 0.02), ("bulgaria", 0.09), ("italy", 0.03), ("albania", 0.04),
-                          ("macedonia", 0.04)],
-        "random": 0.10
     },
     "greenland": {
         "national": 0.79,

@@ -90,7 +90,7 @@ def get_country_dict(search_folders):
                     for line in opened:
                         if "country_code:" in line:
                             abbreviation = line.split("\"")[1].lower()
-                            if country_name not in country_dict and country_name != "monaco":
+                            if country_name not in country_dict and country_name != "x_land":
                                 if abbreviation in abbreviations:
                                     abbreviation += "_"
                                 abbreviations.add(abbreviation)
@@ -223,10 +223,10 @@ read_coordinates(country_coordinates)
 caravan_sales, camper_sales = read_caravan_camper_sales(caravan_camper_sales)
 country_dict = get_country_dict(search_folders)
 
-# created_config = create_bus_spawn_config(country_dict)
+created_config = create_bus_spawn_config(country_dict)
 # created_config = create_van_spawn_config(config.car_spawn_config, config.truck_spawn_config)
 # created_config = create_camper_caravan_spawn_config(config.car_spawn_config, camper_sales)
-created_config = create_camper_caravan_spawn_config(config.car_spawn_config, caravan_sales)
+# created_config = create_camper_caravan_spawn_config(config.car_spawn_config, caravan_sales)
 
 check_spawn_ratios(created_config, country_dict)
 print_spawn_config(created_config)

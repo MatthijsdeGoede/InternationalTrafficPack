@@ -22,7 +22,7 @@ class TruckCreator(BaseCreator):
         # make a truck def for each truck for each country and link with all country trailers via trailer_chains
         self.create_vehicle_traffic_defs(trailer_chains=self.trailer_chains)
         # create all other country related files for the trucks
-        self.create_country_data(self.configuration.truck_spawn_config)
+        self.create_country_data(self.configuration.truck_spawn_config, self.configuration.excluded_countries)
         # create a traffic storage file for the trucks
         self.create_traffic_storage_file(self.configuration.truck_list)
 
@@ -45,6 +45,6 @@ class TrailerCreator(BaseCreator):
         # make a trailer definition
         self.create_vehicle_traffic_defs()
         # create all other country related files for the trailers
-        self.create_country_data(self.configuration.truck_spawn_config)
+        self.create_country_data(self.configuration.truck_spawn_config, self.configuration.excluded_countries)
         # create a traffic storage file for the trailers
         self.create_traffic_storage_file(self.configuration.trailer_list)

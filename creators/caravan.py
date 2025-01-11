@@ -17,6 +17,6 @@ class CaravanCreator(BaseCreator):
         # make a trailer definition
         self.create_vehicle_traffic_defs()
         # create all other country related files for the caravans
-        self.create_country_data(self.configuration.caravan_spawn_config)
+        self.create_country_data(self.configuration.caravan_spawn_config, self.configuration.excluded_countries)
         # create a traffic storage file for the trailers
         self.create_traffic_storage_file(self.configuration.caravan_list)
